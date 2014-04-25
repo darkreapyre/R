@@ -1,3 +1,3 @@
-s repository contains some sample R 
+This repository contains some sample R 
 scripts for future use.
 
