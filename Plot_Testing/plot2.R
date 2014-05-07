@@ -16,8 +16,13 @@ df[, 7] <- as.numeric(df[, 7])
 df[, 8] <- as.numeric(df[, 8])
 df[, 9] <- as.numeric(df[, 9])
 
+## Merge Date/Time
+x <- as.Date(df$Date, "%d/%m/%Y")
+y <- paste(x, df$Time)
+date <- strptime(y, "%Y-%m-%d %H:%M:%S")
+
 ## Plot
-png("plot1.png", width = 480, height = 480)
-hist(df$Global_active_power, main = "Global Active Power", col = "red", 
-     xlab = "Global Active Power (kilowatts)")
+png("plot2.png", width = 480, height = 480)
+plot(date, df$Global_active_power, type = "l",
+     ylab = "Global Active Power (kilowats)")
 dev.off()
