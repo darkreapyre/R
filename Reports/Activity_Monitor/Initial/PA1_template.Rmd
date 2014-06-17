@@ -1,0 +1,168 @@
+# Reproducible Research: Peer Assessment 1
+===========================================
+## Overview
+This report describes the steps taken to demonstrate Reproducible Research for the Coursera Reproducible
+Research Peer Assessment 1. It makes use of data from a personal activity monitoring device. The device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day. 
+
+By analyzing this data, the report answers the questions as to the average number of steps taken each day, the daily activity patterns and highlights the differences between weekday and weekend activity patterns.
+
+Additionally the report shows the steps taken and R Code used to provide the analysis results.
+
+## Loading and preprocessing the data
+1) Download and extract the [activity.zip](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) file into the **data** directory of the R working directory.
+
+2) Read the data into R as a data frame.
+
+```{r readdate, echo = TRUE}
+        ## Load the data
+        df <- read.csv("./data/activity.csv", header = TRUE)
+```
+
+3) View the raw data.
+
+```{r viewdata, echo = TRUE,}
+
+## Summarize the raw data
+summary(df)
+
+## View the data stucture
+str(df)
+
+```
+
+4) Transform the data for analysis.
+
+```{r transformdata, echo = TRUE}
+
+## Transform the column data is of a usable format, i.e steps column is numeric,
+## date colum is date format and the interval colum is numeric.
+df$steps <- as.numeric(df$steps)
+df$date <- as.character(df$date)
+df$interval <- as.numeric(df$interval)
+
+## Convert the date colum to the appropriately formatted date
+df$date <- as.Date(df$date, format = "%Y-%m-%d")
+
+```
+
+
+## What is mean total number of steps taken per day?
+To analyse the number of steps taken per day, the data is broken down by day and totaled. The mean and median can then be calculated.
+
+```{r sumbydate, echo = TRUE}
+## Summarize the number of steps by day
+sumByDate <- tapply(df$steps, df$date, sum)
+
+## Get the Mean of the number of steps per day
+meanByDate <- mean(sumByDate, na.rm = TRUE)
+
+## Get the Median of the numbner of steps per day
+medianByDate <- median(sumByDate, na.rm = TRUE)
+
+```
+
+Below is the histogram depicting the mean total number of steps taken per day.
+
+```{r histogram1, echo = TRUE}
+## Plot the histogram showing the number steps taken per day.
+hist(sumByDate, xlab = "No. steps taken per day", col = "red",
+     main = "Histogram depicting the number of steps taken per day")
+
+```
+
+The Mean is: **`r format(meanByDate, scientific = F)`**  
+The Median is: **`r format(medianByDate, scientific = F)`**
+
+## What is the average daily activity pattern?
+To analyse the average daily activity pattern, the number of steps per daily interval are averaged. Below is a Time-Series plot depicting this pattern.
+
+```{r sumbyinterval, echo = TRUE}
+## Summarize the number of steps per interval and the mean
+sumByInterval <- tapply(df$steps, df$interval, sum)
+meanByInterval <- tapply(df$steps, df$interval, mean, na.rm = TRUE)
+
+## Plot the pattern of daily activity
+plot(unique(df$interval), meanByInterval, type = "l", col = "red", 
+     xlab = "5-minute intervals", ylab = "Average no. steps taken for all days")
+
+## Find the interval containing the maximum number of steps on average
+interval <- df[which.max(meanByInterval), 3]
+
+```
+
+On average across all the days, the 5-minute interval that contains the maximum amount of steps, is the **`r interval`th** interval.
+
+## Imputing missing values
+From the initial summary taken it is evident that there are **2304** missing values (See item **3.** of the **Loading and processing the data** section). This can be verified from the following code chunk:
+
+```{r missing, echo = TRUE}
+## Confirm the total number of missing values (NA) in the data set
+totalMissing <- sum(is.na(df))
+
+```
+Total number of missing values: **`r totalMissing`**
+
+These missing values potentially introduce bias into the analysis performed in the previous sections. Since the missing values are in the Steps column of the data frame and a new data frame is created, substituting any missing values with the mean value of that specific interval as follows: 
+
+```{r df2, echo = TRUE}
+## Create a temporary data frame of all the complete cases
+tmpdf <- df[complete.cases(df), ]
+
+## create a another data frame of the average steps per interval
+tmpMean <- as.data.frame(tapply(tmpdf$steps, INDEX = tmpdf$interval, mean, na.rm = TRUE))
+## Tidy up the new data frame
+colnames(tmpMean) <- "mean"
+tmpMean$interval <- rownames(tmpMean)
+
+## Merge the temporary data frames into a new working data frame
+df2 <- merge(tmpMean, df, by = "interval")
+sort <- order(df2$date, as.numeric(df2$interval))
+df2 <- df2[sort, ]
+
+## Interate through the rows with a for loop, replacing the NA value with the mean vlaue
+for (i in 1:nrow(df2)) {
+        if (is.na(df2$steps[i])) {
+                df2$steps[i] <- df2$mean[i]
+        } else {
+                df2$steps[i] <- df2$steps[i]
+        }
+}
+
+```
+
+Using the new data frame, the analysis can be repeated (See the section on **total number of steps taken per day***) to see if the overall **mean** and **median** values differ.
+
+```{r newsumbydate, echo = TRUE}
+## Summarize the number of steps by day in the new data frame
+newsumByDate <- tapply(df2$steps, df2$date, sum)
+
+## Get the Mean of the number of steps per day in the new data frame
+newmeanByDate <- mean(newsumByDate)
+
+## Get the Median of the numbner of steps per day in the new data frame
+newmedianByDate <- median(newsumByDate)
+
+```
+Below is the histogram depicting the mean total number of steps taken per day (with the missing values replaced by the mean of the specific interval).
+
+```{r histogram2, echo = TRUE}
+## Plot the histogram showing the number steps taken per day from the new data frame.
+hist(newsumByDate, xlab = "No. steps taken per day", col = "red",
+     main = "Histogram depicting the number of steps taken per day (missing values replaced)")
+
+```
+
+The new Mean is: **`r format(newmeanByDate, scientific = F)`**  
+The new Median is: **`r format(newmedianByDate, scientific = F)`**  
+
+As can be seen, there is no difference to the **mean** or **median** by replacing the the missing values with the mean of the specific interval.
+
+## Are there differences in activity patterns between weekdays and weekends?
+To determine whether there are differences in the pattern of activity between weekend and weekdays, the data in the new data frame is catorized into a **weekday** or **weekend** day, based on the date.
+
+From the new data, the time series plot below shows the aversage number of steps taken on the weekend, compared with the average number of steps taken on a weekday.
+
+**Note:***The plot below is made using the lattice system lattice system. In order to reploduce the plot, ensure that the **lattice package** is installed.
+
+
+
