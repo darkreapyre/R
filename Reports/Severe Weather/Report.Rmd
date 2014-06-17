@@ -1,0 +1,11 @@
+Analysis of the Consequences of Severe Weather to the Population Health and Economy in the United States.
+=========================================================================================================
+## Synposis
+
+## Data Processing
+
+### Downloading and loading the data
+
+### Raw Data Analysis
+
+## Results
