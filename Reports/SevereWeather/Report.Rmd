@@ -4,8 +4,16 @@ Analysis of the Consequences of Severe Weather to the Population Health and Econ
 
 ## Data Processing
 
-### Downloading and loading the data
+### Downloading the data
 
-### Raw Data Analysis
+### Initial Analysis
+
+### Transformations for Polulation Health Data
+
+### Transformations for Economy Data
 
 ## Results
+
+### Severe Weather Consequences for Population Health
+
+### Severe Weather Consequences for the Economy
