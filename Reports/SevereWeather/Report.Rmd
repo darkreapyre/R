@@ -1,16 +1,89 @@
-Analysis of the Consequences of Severe Weather to the Population Health and Economy in the United States.
-=========================================================================================================
+The Impact of Severe Weather on Population Health and Economy in the United States.
+=========================================================================
 ## Synposis
+The objective of this report is to provide an analysis of the consequences of severe weather, and which of these events directly impact:
+
+1. Population Health.
+2. Economic Damage.
+
+The analysis is derived from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database and demonstrates the specific weather events that are directly attributed to the  most amount of human fatalities and injuries, as well as the total cost associated with these events to property and crops. 
 
 ## Data Processing
 
 ### Downloading the data
+The data is automatically downloaded, extracted to the **data** folder within the workspace and read into R for analysis. Alternatively, to the data can be manually downloaded from this [link](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2).
+
+```{r download, echo = TRUE}
+## Initialize the environment
+if (!file.exists("data")) {
+        dir.create("data")
+}
+
+## Download the Data (Note: This assumes R for Windows)
+URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(URL, "./data/stormdata.bz2")
+downloadDate <- date()
+
+## Read the file into R
+df <- read.csv(bzfile("./data/stormdata.bz2"))
+```
+
+**Note:** The analysis for this report is performed on data downloaded on `r downloadDate`.
 
 ### Initial Analysis
+After reading the data into R, an initial analysis shows the following:
 
-### Transformations for Polulation Health Data
+```{r firstlook, echo = TRUE}
+## Summarize the Data
+Names <- names(df)
+numVariables <- dim(df)[2]
+numObservations <- dim(df)[1]
+numEvents <- length(unique(df$EVTYPE))
+```
 
-### Transformations for Economy Data
+* There are `r numVariables` specific features to the data.
+`r Names`
+* There are `r numObservations` observations in total.
+* There are `r numEvents` different types of storm events.
+
+Since the objective is to analyze the impact of these storm events on  Population Health and Property/Crop damage, we will focus only on these variables:
+
+* __EVTYPE__
+* __FATALITIES__
+* __INJURIES__
+* __PROPDMG__
+* __PROPDMGEXP__
+* __CROPDMG__
+* __CROPDMGEXP__
+
+### Transformations to the Polulation Health Data
+Firstly, we will focus on focusing the data needed to analyse the event impact on the Population Health. To do this we summarize the total number of __Injuries__ and __Fatalities__ by each type of storm event. We then merge the data into a tidy data frame and calculate the total impact to Population Health by adding the two variables together.
+
+```{r health, echo = TRUE}
+## Create a new data frame with only the relevant data for this analysis
+## Fatalities
+sumFatalities <- as.data.frame(tapply(df$FATALITIES, df$EVTYPE, sum))
+sumFatalities$EVTYPE <- rownames(sumFatalities)
+colnames(sumFatalities) <- c("Injuries", "Type")
+sumFatalities <- sumFatalities[, c(2, 1)]
+rownames(sumFatalities) <- NULL
+
+## Injuries
+sumInjuries <- as.data.frame(tapply(df$INJURIES, df$EVTYPE, sum))
+sumInjuries$EVTYPE <- rownames(sumInjuries)
+colnames(sumInjuries) <- c("Fatalities", "Type")
+sumInjuries <- sumInjuries[, c(2, 1)]
+rownames(sumInjuries) <- NULL
+
+## Merge the data to form the new data frame
+PopHealthData <- merge(sumInjuries, sumFatalities)
+
+## Add the Injuries and Fatalies totals per event type
+PopHealthData$Total <- PopHealthData$Injuries + PopHealthData$Fatalities
+
+```
+
+### Transformations to the Economic Impact Data
 
 ## Results
 
