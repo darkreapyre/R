@@ -1,9 +1,17 @@
 ##                      Data Processing
 
-## Download the Data (Note: This assumes R for Windows)
+## Initialize the environment
+install.packages("ggplot2")
+install.packages("reshape2")
+library(ggplot2)
+library(reshape2)
+
+## Create the data repository
 if (!file.exists("data")) {
         dir.create("data")
 }
+
+## Download the Data (Note: This assumes R for Windows)
 URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
 download.file(URL, "./data/stormdata.bz2")
 downloadDate <- date()
@@ -13,6 +21,7 @@ df <- read.csv(bzfile("./data/stormdata.bz2"))
 
 ##                      Initial Analysis
 
+## Summarize the Data
 summary(df)
 str(df)
 head(df)
@@ -94,7 +103,3 @@ sumCropDMG$Crops[is.na(sumCropDMG$Crops)] <- 0
 ## Merge the data to form the new data frame
 EconomicData <- merge(sumPropDMG, sumCropDMG)
 EconomicData$Total <- EconomicData$Property + EconomicData$Crops
-
-## Summarize the Top 10 with the most impact to Population Health
-PopHealthData[order(PopHealthData$Total, decreasing = TRUE)[1:5], ]
-EconomicData[order(EconomicData$Total, decreasing = TRUE)[1:5], ]
