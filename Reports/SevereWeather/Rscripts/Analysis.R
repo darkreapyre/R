@@ -26,14 +26,14 @@ numEvents <- length(unique(df$EVTYPE))
 ## Fatalities
 sumFatalities <- as.data.frame(tapply(df$FATALITIES, df$EVTYPE, sum))
 sumFatalities$EVTYPE <- rownames(sumFatalities)
-colnames(sumFatalities) <- c("Injuries", "EVTYPE")
+colnames(sumFatalities) <- c("Injuries", "Type")
 sumFatalities <- sumFatalities[, c(2, 1)]
 rownames(sumFatalities) <- NULL
 
 ## Injuries
 sumInjuries <- as.data.frame(tapply(df$INJURIES, df$EVTYPE, sum))
 sumInjuries$EVTYPE <- rownames(sumInjuries)
-colnames(sumInjuries) <- c("Fatalities", "EVTYPE")
+colnames(sumInjuries) <- c("Fatalities", "Type")
 sumInjuries <- sumInjuries[, c(2, 1)]
 rownames(sumInjuries) <- NULL
 
@@ -41,7 +41,7 @@ rownames(sumInjuries) <- NULL
 PopHealthData <- merge(sumInjuries, sumFatalities)
 
 ## Add the Injuries and Fatalies totals per event type (IF NEEDED)
-## PopHealthData$Total <- PopHealthData$INnjuries + PopHealthData$Fatalities
+PopHealthData$Total <- PopHealthData$Injuries + PopHealthData$Fatalities
 
 
 ##              Data Transformation for Economic Impact
@@ -63,7 +63,7 @@ EXP <- c(B = 1000000000, b = 1000000000, M = 1000000, m = 1000000,
 df$PROPCOST <- df$PROPDMG * EXP[as.character(df$PROPDMGEXP)]
 sumPropDMG <- as.data.frame(tapply(df$PROPCOST, df$EVTYPE, sum))
 sumPropDMG$EVTYPE <- rownames(sumPropDMG)
-colnames(sumPropDMG) <- c("Property", "EVTYPE")
+colnames(sumPropDMG) <- c("Property", "Type")
 sumPropDMG <- sumPropDMG[, c(2, 1)]
 rownames(sumPropDMG) <- NULL
 sumPropDMG$Property[is.na(sumPropDMG$Property)] <- 0
@@ -86,10 +86,15 @@ sumPropDMG$Property[is.na(sumPropDMG$Property)] <- 0
 df$CROPCOST <- df$CROPDMG * EXP[as.character(df$CROPDMGEXP)]
 sumCropDMG <- as.data.frame(tapply(df$CROPCOST, df$EVTYPE, sum))
 sumCropDMG$EVTYPE <- rownames(sumCropDMG)
-colnames(sumCropDMG) <- c("Crops", "EVTYPE")
+colnames(sumCropDMG) <- c("Crops", "Type")
 sumCropDMG <- sumCropDMG[, c(2, 1)]
 rownames(sumCropDMG) <- NULL
 sumCropDMG$Crops[is.na(sumCropDMG$Crops)] <- 0
 
 ## Merge the data to form the new data frame
 EconomicData <- merge(sumPropDMG, sumCropDMG)
+EconomicData$Total <- EconomicData$Property + EconomicData$Crops
+
+## Summarize the Top 10 with the most impact to Population Health
+PopHealthData[order(PopHealthData$Total, decreasing = TRUE)[1:5], ]
+EconomicData[order(EconomicData$Total, decreasing = TRUE)[1:5], ]

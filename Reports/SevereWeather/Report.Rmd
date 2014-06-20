@@ -17,3 +17,5 @@ Analysis of the Consequences of Severe Weather to the Population Health and Econ
 ### Severe Weather Consequences for Population Health
 
 ### Severe Weather Consequences for the Economy
+
+### Summary
