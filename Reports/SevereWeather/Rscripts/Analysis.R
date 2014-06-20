@@ -1,12 +1,6 @@
 ##                      Data Processing
 
 ## Initialize the environment
-install.packages("ggplot2")
-install.packages("reshape2")
-library(ggplot2)
-library(reshape2)
-
-## Create the data repository
 if (!file.exists("data")) {
         dir.create("data")
 }
