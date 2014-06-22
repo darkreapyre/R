@@ -1,39 +1,40 @@
+`r opts_chunk$set(warning = FALSE, echo = FALSE)`
 The Impact of Severe Weather on Population Health and Economy in the United States.
 =========================================================================
 ## Synposis
 The objective of this report is to provide an analysis of the consequences of severe weather, and which of these events directly impact:
 
 1. Population Health.
-2. Economic Damage.
+2. Economy.
 
-The analysis is derived from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database and demonstrates the specific weather events that are directly attributed to the  most amount of human fatalities and injuries, as well as the total cost associated with these events to property and crops. 
+The analysis is derived from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database and demonstrates the specific weather events that are directly attributed to the  most amount of human fatalities and injuries. As well as the total cost of the damages to property and crops that these storm events cause.
 
 ## Data Processing
 
 ### Downloading the data
-The data is automatically downloaded, extracted to the **data** folder within the workspace and read into R for analysis. Alternatively, to the data can be manually downloaded from this [link](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2).
+The data is automatically downloaded, extracted to the __data__ folder within the workspace and read into R for analysis. Alternatively, the data can be manually downloaded from this [link](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2).
 
-```{r download, echo = TRUE}
+```{r download, echo = TRUE, cache = TRUE}
 ## Initialize the environment
 if (!file.exists("data")) {
         dir.create("data")
 }
 
-## Download the Data (Note: This assumes R for Windows)
+## Download the Data
 URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
-download.file(URL, "./data/stormdata.bz2")
+download.file(URL, "./data/stormdata.bz2", method = "curl")
 downloadDate <- date()
 
 ## Read the file into R
 df <- read.csv(bzfile("./data/stormdata.bz2"))
 ```
 
-**Note:** The analysis for this report is performed on data downloaded on `r downloadDate`.
+__Note: The analysis for this report is performed on data downloaded on `r downloadDate`.__
 
 ### Initial Analysis
 After reading the data into R, an initial analysis shows the following:
 
-```{r firstlook, echo = TRUE}
+```{r firstlook, echo = TRUE, cache = TRUE}
 ## Summarize the Data
 Names <- names(df)
 numVariables <- dim(df)[2]
@@ -41,10 +42,14 @@ numObservations <- dim(df)[1]
 numEvents <- length(unique(df$EVTYPE))
 ```
 
-* There are `r numVariables` specific features to the data.
-`r Names`
-* There are `r numObservations` observations in total.
-* There are `r numEvents` different types of storm events.
+* There are __`r numVariables`__ specific features to the data. These are, 
+
+```{r numvariables, echo = TRUE, cache = TRUE}
+Names
+```
+
+* There are __`r numObservations`__ observations in total.
+* There are __`r numEvents`__ different types of storm events.
 
 Since the objective is to analyze the impact of these storm events on  Population Health and Property/Crop damage, we will focus only on these variables:
 
@@ -57,13 +62,15 @@ Since the objective is to analyze the impact of these storm events on  Populatio
 * __CROPDMGEXP__
 
 ### Transformations to the Polulation Health Data
-Firstly, we will focus on focusing the data needed to analyse the event impact on the Population Health. To do this we summarize the total number of __Injuries__ and __Fatalities__ by each type of storm event. We then merge the data into a tidy data frame and calculate the total impact to Population Health by adding the two variables together.
+Firstly, we will focus on the data needed to analyse the impact of storm events on the Population Health. To do this we summarize the total number of __Injuries__ and __Fatalities__ observations, by each type of storm event. We then merge the data into a tidy data frame and calculate the total impact to the Population Health by adding these two variables together.
 
-```{r health, echo = TRUE}
+```{r health, echo = TRUE, cache = TRUE}
 ## Create a new data frame with only the relevant data for this analysis
 ## Fatalities
+df$EVTYPE <- tolower(df$EVTYPE)
 sumFatalities <- as.data.frame(tapply(df$FATALITIES, df$EVTYPE, sum))
 sumFatalities$EVTYPE <- rownames(sumFatalities)
+sumFatalities$EVTYPE <- tolower(sumFatalities$EVTYPE)
 colnames(sumFatalities) <- c("Injuries", "Type")
 sumFatalities <- sumFatalities[, c(2, 1)]
 rownames(sumFatalities) <- NULL
@@ -71,6 +78,7 @@ rownames(sumFatalities) <- NULL
 ## Injuries
 sumInjuries <- as.data.frame(tapply(df$INJURIES, df$EVTYPE, sum))
 sumInjuries$EVTYPE <- rownames(sumInjuries)
+sumInjuries$EVTYPE <- tolower(sumInjuries$EVTYPE)
 colnames(sumInjuries) <- c("Fatalities", "Type")
 sumInjuries <- sumInjuries[, c(2, 1)]
 rownames(sumInjuries) <- NULL
@@ -84,11 +92,128 @@ PopHealthData$Total <- PopHealthData$Injuries + PopHealthData$Fatalities
 ```
 
 ### Transformations to the Economic Impact Data
+Secondly, we will focus on the data needed to analyse the impact of storm events on the Economy. However, this task is a little more complicated as the __CROPDMG__ and __PROPDMG__ features simply display a value, as follows:
+
+```{r propdmgexample, echo = TRUE, cache = TRUE}
+df$PROPDMG[[1]]
+
+```
+
+It unknown as to whether this value is in Millions or Billions of dollars. To address this, the __PROPDMGEXP__ and __CROPDMGEXP__ variables supply a key that indicates the exponential value. However, the "keys" provided within the data are not tidy, as can be seen from the following list of keys.
+
+```{r explevels, echo = TRUE, cache = TRUE}
+## View EXP classifcations for Property Damage
+levels(df$PROPDMGEXP)
+
+```
+The code book provided with the data set does not provide a definition for what some of these values mean. Added to this is the fact that some of the keys don't correlate to any data, as can be seen from the following output:
+
+```{r emptyvalue, echo = TRUE, cache = TRUE}
+## Example of a meaningless EXP factor
+df$PROPDMG[df$PROPDMGEXP == "8"]
+
+```
+To this end, we create a tidy set of usable exponential values. The other undefined values are discarded.
+
+```{r expvalues, echo = TRUE, cache = TRUE}
+## Create a vector of the relevent EXP factors
+EXP <- c(B = as.integer(1000000000), b = as.integer(1000000000),
+         M = as.integer(1000000), m = as.integer(1000000),
+         K = as.integer(1000), k = as.integer(1000))
+EXP
+
+```
+The same methodology applied to tidying the Population Health data can then be applied to the __PROPDMG__ and __CROPDMG__ variables respectively. This will enable us to determine the total cost of the damage resulting from each type of storm event.
+
+
+```{r economy, echo = TRUE, cache = TRUE}
+## Add a new column to the data frame applying EXP to Property Damage
+## To create a data frame for property damage
+df$PROPCOST <- df$PROPDMG * EXP[as.character(df$PROPDMGEXP)]
+sumPropDMG <- as.data.frame(tapply(df$PROPCOST, df$EVTYPE, sum))
+sumPropDMG$EVTYPE <- rownames(sumPropDMG)
+sumPropDMG$EVTYPE <- tolower(sumPropDMG$EVTYPE)
+colnames(sumPropDMG) <- c("Property", "Type")
+sumPropDMG <- sumPropDMG[, c(2, 1)]
+rownames(sumPropDMG) <- NULL
+sumPropDMG$Property[is.na(sumPropDMG$Property)] <- 0
+
+## Apply the same methologoy for the Crop Damage Data
+df$CROPCOST <- df$CROPDMG * EXP[as.character(df$CROPDMGEXP)]
+sumCropDMG <- as.data.frame(tapply(df$CROPCOST, df$EVTYPE, sum))
+sumCropDMG$EVTYPE <- rownames(sumCropDMG)
+sumCropDMG$EVTYPE <- tolower(sumCropDMG$EVTYPE)
+colnames(sumCropDMG) <- c("Crops", "Type")
+sumCropDMG <- sumCropDMG[, c(2, 1)]
+rownames(sumCropDMG) <- NULL
+sumCropDMG$Crops[is.na(sumCropDMG$Crops)] <- 0
+
+## Merge the data to form the new data frame
+EconomicData <- merge(sumPropDMG, sumCropDMG)
+EconomicData$Total <- EconomicData$Property + EconomicData$Crops
+
+```
 
 ## Results
+Now that we have the data relevant for the analysis, we can proceed to answer the questions posed at the outset, namely:
 
-### Severe Weather Consequences for Population Health
+1. Across the united States, which types of events are most harmful with respect to Population Health?
+2. Across the United States, which types of events have the greatest economic consequences?
 
-### Severe Weather Consequences for the Economy
+### Severe Weather Impact on Population Health
+From the analysis done with the __Injuries__ and __Fatalities__ observations, we can examine the Top 10 most severe Weather events impacting Population Health, as follows:
 
-### Summary
+
+```{r healthtop10, echoe = TRUE, cache = TRUE}
+## Summary of the Top 10 events impacting Population Health
+HealthTop10 <- PopHealthData[order(PopHealthData$Total, decreasing = TRUE)[1:10], ]
+HealthTop10
+
+```
+As can bee seen from the data, Tornado's by far have the most severe impact on Population Health. This is further clarified in the following plot.
+
+```{r plot1, echo = TRUE, cache = TRUE}
+## Show this via a Plot
+require(plyr)
+require(reshape2)
+require(ggplot2)
+## Prepare the data for plotting (reformatting required for qplot)
+tmp1Data <- ddply(HealthTop10, .(Injuries, Fatalities), summarize,
+           Total = Injuries + Fatalities)
+tmp1Data <- tmp1Data[order(tmp1Data$Total, decreasing = TRUE), ]
+tmp1Data$Type <- HealthTop10$Type
+Plot1Data <- melt(tmp1Data, id.vars = "Type")
+p1 <- qplot(x = Type, y = value, fill = variable,
+           data = Plot1Data, geom = "bar", stat = "identity",
+           position = "dodge") + xlab("Event Type") + ylab("Total") + 
+        ggtitle("Impact of Severe Storms to the Population Health") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p1
+```
+
+### Severe Weather Impact on the Economy
+From the analysis done with the __Crop Damage__ and __Property Damage__ observations, we can examine the Top 10 most severe Weather events impacting the Economic by looking at the financial impact of the damaged caused, as follows:
+
+```{r economytop10, echo = TRUE, cache = TRUE}
+## Summary of the Top 1- events impacting the Economy
+EconomicTop10 <- EconomicData[order(EconomicData$Total, decreasing = TRUE)[1:10], ]
+EconomicTop10
+```
+
+As was the case with the __Injuries__ and __Fatalities__, Tornado's also have the most significant impact to __Crop Damage__ and __Property Damage__ in the total amount of cost of the damage (in Millions of Dollars). The following plot helps us to visualize just how severe the impact is when compared with other types of storm events.
+
+```{r plot2, echo = TRUE, cache = TRUE}
+## Apply same methadology for Ecomonic Data
+tmp2Data <- ddply(EconomicTop10, .(Property, Crops), summarize,
+                  Total = Property + Crops)
+tmp2Data <- tmp2Data[order(tmp2Data$Total, decreasing = TRUE), ]
+tmp2Data$Type <- EconomicTop10$Type
+Plot2Data <- melt(tmp2Data, id.vars = "Type")
+p2 <- qplot(x = Type, y = value/1000000, fill = variable,
+           data = Plot2Data, geom = "bar", stat = "identity",
+           position = "dodge") + xlab("Event Type") + 
+        ylab("Damage Costs (Million $)") + 
+        ggtitle("Impact of Severe Storms to the Economy") + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p2
+```

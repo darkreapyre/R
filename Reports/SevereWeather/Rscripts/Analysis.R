@@ -27,6 +27,9 @@ numEvents <- length(unique(df$EVTYPE))
 
 ## Create a new data frame with only the relevant data for this analysis
 ## Fatalities
+#df <- df[!grepl("Summary", df$EVTYPE), ]
+#df <- subset(df, FATALITIES > 0 | INJURIES > 0 | PROPDMG > 0 | CROPDMG > 0)
+df$EVTYPE <- tolower(df$EVTYPE)
 sumFatalities <- as.data.frame(tapply(df$FATALITIES, df$EVTYPE, sum))
 sumFatalities$EVTYPE <- rownames(sumFatalities)
 colnames(sumFatalities) <- c("Injuries", "Type")
@@ -58,14 +61,19 @@ PropEXP <- levels(df$PROPDMGEXP)
 df$PROPDMG[df$PROPDMGEXP == "8"]
 
 ## Create a vector of the relevent EXP factors
-EXP <- c(B = 1000000000, b = 1000000000, M = 1000000, m = 1000000,
-             K = 1000, k = 1000)
+##EXP <- c(B = 1000000000, b = 1000000000, M = 1000000, m = 1000000,
+##             K = 1000, k = 1000)
+
+EXP <- c(B = as.integer(1000000000), b = as.integer(1000000000),
+         M = as.integer(1000000), m = as.integer(1000000),
+         K = as.integer(1000), k = as.integer(1000))
 
 ## Add a new column to the data frame applying EXP to Property Damage
 ## To create a data frame for analysis
 df$PROPCOST <- df$PROPDMG * EXP[as.character(df$PROPDMGEXP)]
 sumPropDMG <- as.data.frame(tapply(df$PROPCOST, df$EVTYPE, sum))
 sumPropDMG$EVTYPE <- rownames(sumPropDMG)
+sumPropDMG$EVTYPE <- tolower(sumPropDMG$EVTYPE)
 colnames(sumPropDMG) <- c("Property", "Type")
 sumPropDMG <- sumPropDMG[, c(2, 1)]
 rownames(sumPropDMG) <- NULL
@@ -89,6 +97,7 @@ sumPropDMG$Property[is.na(sumPropDMG$Property)] <- 0
 df$CROPCOST <- df$CROPDMG * EXP[as.character(df$CROPDMGEXP)]
 sumCropDMG <- as.data.frame(tapply(df$CROPCOST, df$EVTYPE, sum))
 sumCropDMG$EVTYPE <- rownames(sumCropDMG)
+sumCropDMG$EVTYPE <- tolower(sumCropDMG$EVTYPE)
 colnames(sumCropDMG) <- c("Crops", "Type")
 sumCropDMG <- sumCropDMG[, c(2, 1)]
 rownames(sumCropDMG) <- NULL
