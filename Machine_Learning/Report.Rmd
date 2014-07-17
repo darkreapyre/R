@@ -1,0 +1,14 @@
+`r opts_chunk$set(warning = FALSE, echo = FALSE)`
+
+=========================================================================
+## Synposis
+
+## Data Processing
+
+### Downloading the data
+
+### Initial Analysis
+
+### Transformations
+
+## Results
