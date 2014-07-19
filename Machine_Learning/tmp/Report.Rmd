@@ -9,6 +9,14 @@
 
 ### Initial Analysis
 
-### Transformations
+## Data Modeling
+
+### Pre-Processing
+
+### Model Selection
+
+### Model Testing
 
 ## Results
+
+## References
