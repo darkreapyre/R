@@ -1,0 +1,20 @@
+`r opts_chunk$set(warning = FALSE, echo = FALSE)`
+
+=========================================================================
+## Synposis
+
+## Data Processing
+
+### Downloading the data
+
+### Initial Analysis
+
+## Pre-Processing
+
+## Model Selection
+
+## Model Testing
+
+## Results
+
+## References
