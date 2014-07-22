@@ -1,0 +1,7 @@
+library(parallel)
+library(doParallel)
+library(randomForest)
+library(e1071)
+cluster <- makeCluster(8)
+registerDoParallel(cluster)
+modelRF <- train(trainSet$classe ~ ., data = trainSet, method = "rf", prox = TRUE)

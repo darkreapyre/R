@@ -8,13 +8,24 @@
 ### Downloading the data
 
 ### Initial Analysis
+- Crete a Sample
+- Check the spread of the missing data
+- Plot the missing data
 
-## Pre-Processing
+## Data Transformation and Pre-processing
+- Ensure all Data is numeric
+- Remove unneccesary Columns
+- Split the data
+- Impute missing date with knnImpute
+- Center and Scale
+- Near Zero Variance
+- Hgh Correlation
+- Reduce dimentionality with PCA
 
-## Model Selection
-
-## Model Testing
+## Model Fitting
 
 ## Results
 
 ## References
+
+## Appendix A: Model Selection
