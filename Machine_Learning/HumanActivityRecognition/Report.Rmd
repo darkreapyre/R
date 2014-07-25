@@ -1,31 +1,24 @@
-`r opts_chunk$set(warning = FALSE, echo = FALSE)`
+`r opts_chunk$set(warning = FALSE, echo = TRUE)`
 
 =========================================================================
 ## Synposis
 
 ## Data Processing
-
 ### Downloading the data
 
 ### Initial Analysis
-- Crete a Sample
-- Check the spread of the missing data
-- Plot the missing data
 
 ## Data Transformation and Pre-processing
-- Ensure all Data is numeric
-- Remove unneccesary Columns
-- Split the data
-- Impute missing date with knnImpute
-- Center and Scale
-- Near Zero Variance
-- Hgh Correlation
-- Reduce dimentionality with PCA
+### Cleaning the Data
+
+### Pre-Processing the Data
 
 ## Model Fitting
+NOTE: Don't forget to cache
 
 ## Results
+### Pre-process the Testing Data
+
+### Final Model Test
 
 ## References
-
-## Appendix A: Model Selection
