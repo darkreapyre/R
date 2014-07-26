@@ -1,6 +1,5 @@
 ## Initialize the environment
 set.seed(6969)
-library(caret) ## Hide output
 if (!file.exists("data")) {
         dir.create("data")
 }
@@ -50,6 +49,11 @@ classe <- trainData$classe
 features <- sapply(trainData, is.numeric)
 trainData <- cbind(trainData[, features], classe)
 
+## Replace the missing data with the values of nearest neighbor 
+##preObj <- preProcess(trainData[, -120], method = c("center", "scale", "knnImpute"))
+##trainData.imputed <- predict(preObj, trainData[, -120])
+##trainData.imputed$classe <- classe
+
 ## Find correlations in the data for further dimentionality reduction
 correlated <- findCorrelation(cor(trainData[, -120]), cutoff = 0.99)
 trainData.reduced <- trainData[, -correlated]
@@ -58,31 +62,28 @@ trainData.reduced <- trainData[, -correlated]
 dim(trainData.reduced[, -117])[2]
 
 ##Subset the data for cross-validation (60/40 Split)
-set.seed(6969)
 subSet <- createDataPartition(y = trainData.reduced$classe, p = 0.6,
                               list = FALSE)
 trainSet <- trainData.reduced[subSet, ]
 valSet <- trainData.reduced[-subSet, ]
 
-library(parallel) ## Hide
-library(doParallel) ## Hide
+library(caret) ## Hide output
 library(randomForest) ## Warnings
 
-## Create Parallel Cluster
-cluster <- makeCluster(8)
-registerDoParallel(cluster)
-
 ## Fit the Random Forest Model
-rfModel <- randomForest(classe ~ ., data = trainSet, mtry = 13, ntree = 2048,
+rfModel <- randomForest(classe ~ ., data = trainSet, mtry = 15, ntree = 2048,
                         keep.forest = TRUE, importance = TRUE, proximity = TRUE)
 
 ## Plot the Important Variables
 varImpPlot(rfModel)
 
 ## Plot the Model
-plot(rfModel)
-plot(margin(rfModel))
-plot(outlier(rfModel), type = "h")
+layout(matrix(c(1, 2), nrow = 1), width = c(4, 1))
+par(mar = c(5, 4, 4, 0))
+plot(rfModel, log = "y")
+par(mar = c(5, 0, 4, 2))
+plot(c(0, 1), type = "n", axes = F, xlab = "", ylab = "")
+legend("top", colnames(rfModel$err.rate), col = 1:6, cex = 0.8, fill = 1:6)
 
 ## Predict on the Validation data set
 Predict <- predict(rfModel, valSet)
