@@ -1,5 +1,6 @@
 ## Initialize the environment
 set.seed(6969)
+library(caret)
 if (!file.exists("data")) {
         dir.create("data")
 }
@@ -20,7 +21,7 @@ dim(trainData)
 
 # Select 8 random predictors
 numPredictors <- ncol(trainData) - 1
-s <- sample(1:numPredictors, 10)
+s <- sample(1:numPredictors, 8)
 Sample <- trainData[, s]
 str(Sample)
 summary(Sample)

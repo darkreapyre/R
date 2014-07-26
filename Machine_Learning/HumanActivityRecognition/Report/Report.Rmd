@@ -1,0 +1,202 @@
+Using Machine Learning to Predict Weight Lifting Exercises
+=========================================================================
+## Abstract
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
+
+The goal of this report is to predict - by applying various Machine Learning techniques on data from accelerometers located on the belt, forearm, arm and dumbbell - the manner in which 6 participants performed the exercises.
+
+For more information, consult from the website[^website], and __References__ Section.
+
+### Data Processing
+#### Downloading the data
+To start the process, the data[^training] for analyzing, testing and building the Machine Learning model, as well as the data[^testing] for testing is downloaded and read into R.
+
+```{r Initialize, echo = TRUE}
+## Initialize the environment
+library(caret)
+if (!file.exists("data")) {
+        dir.create("data")
+}
+
+## Download the Data
+trainURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(trainURL, "./data/train.csv", method = "curl")
+download.file(testURL, "./data/test.csv", method = "curl")
+downloadDate <- date()
+
+## Read the file into R
+trainData <- read.csv("./data/train.csv", header = TRUE)
+testData <- read.csv("./data/test.csv", header = TRUE)
+
+```
+
+__Note:__ The data for this report was downloaded on __`r downloadDate`__.
+
+#### Initial Analysis
+A first look at the data shows that there are __`r dim(trainData)[[1]]`__ Observations and __`r dim(trainData)[[2]]`__ variables that can be used as predictors for the Machine Learning algorithm. Since the data set is quite large, we take a random sample of 8 of the features and analyze some of their characteristics.
+
+```{r Sample, echo = TRUE}
+# Select 8 random predictors
+set.seed(6969)
+numPredictors <- ncol(trainData) - 1
+s <- sample(1:numPredictors, 8)
+Sample <- trainData[, s]
+str(Sample)
+summary(Sample)
+
+```
+As can be seen from the summary of the 8 random samples, there are a lot of missing values as well as some "other" variables. The following plot show the extent of these missing values, in most cases entire variables have missing data.
+
+```{r MissingVarPlot, echo = TRUE}
+## Plot the spread of missing values in the Sample
+missingVar <- sapply(Sample, function(x) sum(is.na(x)))
+dfmissing <- data.frame(variable = names(missingVar), missing = missingVar,
+                        stringsAsFactors = FALSE)
+dfmissing$variable <- factor(dfmissing$variable, levels = dfmissing$variable,
+                             ordered =  FALSE)
+qplot(x = variable, y = missing, data = dfmissing, geom = "bar", 
+      stat = "identity", position = "dodge") +  
+        xlab("Predictor Variable") + ylab("No. Missing Values") + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Data Transformation and Pre-processing
+To clean the data and prepare it for modeling, the first issue that needs to be addressed are the large amount missing values. There are a number of options that can be used to address this.
+
+__1. Imputation:__ Replacing the missing values with the average of the nearest neighbor or a bagged tree model better suites training data with random missing values, not entire predictors.  
+__2. Deletion:__ Since entire variables are made up of missing values, deleting the values will significantly reduce the number of predictors to train the model.  
+__3. Zeroing:__ Replacing the missing values with zero means that relevant predictors are not deleted or incorrectly imputed. Although this method does not address issues of predictor bias, there are other methods that can be employed for dimensionality reduction.
+
+#### Cleaning the Data
+The first step to cleaning the data is to remove the variables that do not pertain to the accelerometer data (belt, forearm, arm and dumbbell).
+
+```{r RemoveCols, echo = TRUE}
+## Remove unnecessary Columns
+removeCols <- c("X", "user_name", "raw_timestamp_part_1", "new_window", 
+                "num_window", "raw_timestamp_part_2", "cvtd_timestamp")
+trainData <- trainData[, !names(trainData) %in% removeCols]
+
+```
+The next step is is replace all the missing values with zero.
+
+```{r Zero, echo = TRUE}
+## Chnage all the missing values to ZERO
+trainData[is.na(trainData)] <- 0
+
+```
+Since the models assume that all of the data are numeric, the final step in the data cleaning process is to only extract the Variables that contain numeric data.
+
+```{r OnlyNumeric, echo = TRUE}
+## Ensure all the data that can be used as features (numeric class)
+classe <- trainData$classe
+features <- sapply(trainData, is.numeric)
+trainData <- cbind(trainData[, features], classe)
+
+```
+#### Pre-Processing the Data
+Now the data has been cleaned, it must be pre-processed to ensure the best predictors are selected to train the model. This process involves finding correlated  predictors and removing them. This process ensures that any __redundant__ (correlated by __99%__) predictors are removed.   
+
+```{r Correlations, echo = TRUE}
+## Find correlations in the data for further dimentionality reduction
+correlated <- findCorrelation(cor(trainData[, -120]), cutoff = 0.99)
+trainData.reduced <- trainData[, -correlated]
+
+```
+This simple process of dimensionality reduction leaves __`r dim(trainData.reduced[, -117])[2]` Predictors__.
+
+### Model Fitting
+To assess the accuracy of how proposed model will generalize to the independent testing data set (__cross-validation__), the data is partitioned into a training subset and validation subset, using a 60/40 split.
+
+```{r Subset, echo = TRUE}
+##Subset the data for cross-validation (60/40 Split)
+subSet <- createDataPartition(y = trainData.reduced$classe, p = 0.6,
+                              list = FALSE)
+trainSet <- trainData.reduced[subSet, ]
+valSet <- trainData.reduced[-subSet, ]
+
+```
+The __Random Forest__ model was selected to predict the manner in which 6 participants performed the exercises for the following reasons:
+
+* Random Forests are not sensitive to outliers.
+* Random Forests are not sensitive to overfitting.
+* Accuracy and variable importance are automatically generated.
+
+```{r FitModel, echo = TRUE, cache = TRUE}
+library(randomForest)
+## Fit the Random Forest Model
+rfModel <- randomForest(classe ~ ., data = trainSet, mtry = 15, ntree = 2048,
+                        keep.forest = TRUE, importance = TRUE, proximity = TRUE)
+
+```
+The following plot shows the variables that are __estmated__ to have the most impact as predictors.
+
+```{r varImpPlot, echo = TRUE}
+## Plot the Important Variables
+varImpPlot(rfModel)
+
+```
+The next plot shows the Error Rate vs. the Number of trees for each level of the output variable __classe__.
+
+```{r modelPlot, echoe = TRUE}
+## Plot the Model
+layout(matrix(c(1, 2), nrow = 1), width = c(4, 1))
+par(mar = c(5, 4, 4, 0))
+plot(rfModel, log = "y")
+par(mar = c(5, 0, 4, 2))
+plot(c(0, 1), type = "n", axes = F, xlab = "", ylab = "")
+legend("top", colnames(rfModel$err.rate), col = 1:6, cex = 0.8, fill = 1:6)
+
+```
+The model is then applied to the validation data set.
+
+```{r Predict, echo = TRUE}
+## Predict on the Validation data set
+Predict <- predict(rfModel, valSet)
+
+## Confusion Matrix
+confusionMatrix(Predict, valSet$classe)
+
+```
+As can be seen from the above Confusion Matrix, the overall accuracy of the model on the validation data set is __`r confusionMatrix(Predict, valSet$classe)$overall[[1]]`__. This means that when the model is applied to the independent testing set, there is an __out of sample__ error rate of __`r 1 - confusionMatrix(Predict, valSet$classe)$overall[[1]]`__.
+
+### Results
+Now the model can be applied to the independent testing data set to verify that it accurately predicts the manner in which 6 participants performed the exercises. 
+#### Pre-process the Testing Data
+Firstly, the Data Transformation and Pre-processing methodology needs to be applied to the independent testing data set.
+
+```{r CleanTest, echo = TRUE}
+## Apply Pre-processing methadology to the Test Data
+removeCols <- c("X", "user_name", "raw_timestamp_part_1", "new_window", 
+                "num_window", "raw_timestamp_part_2", "cvtd_timestamp")
+testData <- testData[, !names(testData) %in% removeCols]
+testData[is.na(testData)] <- 0
+classe <- testData$problem_id
+features <- sapply(testData, is.numeric)
+testData <- cbind(testData[, features], classe)
+
+```
+
+#### Final Model Test
+The model is finally applied to the 20 test cases within the cleaned testing data set.
+
+```{r Final, echo = TRUE}
+## Final test (pml-testing.csv)
+Final <- predict(rfModel, testData)
+
+```
+
+### Conclusion
+When applied to the 20 test cases, the Random Forest Machine learning algorithm correctly predicted the manner in which the exercises were preformed.
+
+```{r Results, echo = TRUE}
+Final
+```
+
+### References
+Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6.
+
+[^website]: http://groupware.les.inf.puc-rio.br/har
+[^training]: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+[^testing]: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
