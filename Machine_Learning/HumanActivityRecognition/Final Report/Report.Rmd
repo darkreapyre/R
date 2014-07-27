@@ -1,11 +1,12 @@
 Using Machine Learning to Predict Weight Lifting Exercises
 =========================================================================
+
 ## Abstract
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
 
 The goal of this report is to predict - by applying various Machine Learning techniques on data from accelerometers located on the belt, forearm, arm and dumbbell - the manner in which 6 participants performed the exercises.
 
-For more information, consult from the website[^website], and __References__ Section.
+For more information, consult the website[^website], and __References__ Section.
 
 ### Data Processing
 #### Downloading the data
@@ -34,7 +35,7 @@ testData <- read.csv("./data/test.csv", header = TRUE)
 __Note:__ The data for this report was downloaded on __`r downloadDate`__.
 
 #### Initial Analysis
-A first look at the data shows that there are __`r dim(trainData)[[1]]`__ Observations and __`r dim(trainData)[[2]]`__ variables that can be used as predictors for the Machine Learning algorithm. Since the data set is quite large, we take a random sample of 8 of the features and analyze some of their characteristics.
+A first look at the data shows that there are __`r dim(trainData)[[1]]`__ Observations and __`r dim(trainData)[[2]]`__ Variables that can be used as predictors for the Machine Learning algorithm. Since the data set is quite large, we take a random sample of __8__ of the features and analyze some of their characteristics.
 
 ```{r Sample, echo = TRUE}
 # Select 8 random predictors
@@ -46,7 +47,7 @@ str(Sample)
 summary(Sample)
 
 ```
-As can be seen from the summary of the 8 random samples, there are a lot of missing values as well as some "other" variables. The following plot show the extent of these missing values, in most cases entire variables have missing data.
+As can be seen from the summary of the 8 random samples, there are a lot of missing values. The following plot show the spread of these missing values. As can be seen, in most cases entire variables have missing data.
 
 ```{r MissingVarPlot, echo = TRUE}
 ## Plot the spread of missing values in the Sample
@@ -96,7 +97,7 @@ trainData <- cbind(trainData[, features], classe)
 
 ```
 #### Pre-Processing the Data
-Now the data has been cleaned, it must be pre-processed to ensure the best predictors are selected to train the model. This process involves finding correlated  predictors and removing them. This process ensures that any __redundant__ (correlated by __99%__) predictors are removed.   
+Now the data has been cleaned, it must be pre-processed to ensure the best predictors are selected to train the model. This process involves finding correlated  predictors and removing them. This process ensures that any __redundant__ (__99%__ similar) predictors are removed.   
 
 ```{r Correlations, echo = TRUE}
 ## Find correlations in the data for further dimentionality reduction
@@ -107,7 +108,7 @@ trainData.reduced <- trainData[, -correlated]
 This simple process of dimensionality reduction leaves __`r dim(trainData.reduced[, -117])[2]` Predictors__.
 
 ### Model Fitting
-To assess the accuracy of how proposed model will generalize to the independent testing data set (__cross-validation__), the data is partitioned into a training subset and validation subset, using a 60/40 split.
+To assess the accuracy of how the proposed model will generalize to the independent testing data set (__cross-validation__), the data is partitioned into a training subset and validation subset, using a 60/40 split.
 
 ```{r Subset, echo = TRUE}
 ##Subset the data for cross-validation (60/40 Split)
@@ -117,27 +118,29 @@ trainSet <- trainData.reduced[subSet, ]
 valSet <- trainData.reduced[-subSet, ]
 
 ```
-The __Random Forest__ model was selected to predict the manner in which 6 participants performed the exercises for the following reasons:
+The __Random Forest__ model was selected to predict the manner in which exercises were performed, for the following reasons:
 
 * Random Forests are not sensitive to outliers.
 * Random Forests are not sensitive to overfitting.
 * Accuracy and variable importance are automatically generated.
 
-```{r FitModel, echo = TRUE, cache = TRUE}
+```{r FitModel, echo = TRUE}
 library(randomForest)
 ## Fit the Random Forest Model
 rfModel <- randomForest(classe ~ ., data = trainSet, mtry = 15, ntree = 2048,
                         keep.forest = TRUE, importance = TRUE, proximity = TRUE)
 
 ```
-The following plot shows the variables that are __estmated__ to have the most impact as predictors.
+
+The following plot shows the variables that are __estimated__ to have the most impact as predictors.
 
 ```{r varImpPlot, echo = TRUE}
 ## Plot the Important Variables
 varImpPlot(rfModel)
 
 ```
-The next plot shows the Error Rate vs. the Number of trees for each level of the output variable __classe__.
+
+The next plot shows the Error Rate vs. the Number of trees for each level of the output variable (__classe__).
 
 ```{r modelPlot, echoe = TRUE}
 ## Plot the Model
@@ -149,7 +152,8 @@ plot(c(0, 1), type = "n", axes = F, xlab = "", ylab = "")
 legend("top", colnames(rfModel$err.rate), col = 1:6, cex = 0.8, fill = 1:6)
 
 ```
-The model is then applied to the validation data set.
+
+The model is then applied to the validation data set to get an estimate of its accuracy on new data.
 
 ```{r Predict, echo = TRUE}
 ## Predict on the Validation data set
@@ -159,10 +163,11 @@ Predict <- predict(rfModel, valSet)
 confusionMatrix(Predict, valSet$classe)
 
 ```
-As can be seen from the above Confusion Matrix, the overall accuracy of the model on the validation data set is __`r confusionMatrix(Predict, valSet$classe)$overall[[1]]`__. This means that when the model is applied to the independent testing set, there is an __out of sample__ error rate of __`r 1 - confusionMatrix(Predict, valSet$classe)$overall[[1]]`__.
+As can be seen from the above Confusion Matrix, the overall accuracy of the model on the validation data set is __`r round(confusionMatrix(Predict, valSet$classe)$overall[[1]]*100)`%__. This means that when the model is applied to the independent testing set, there is an __out of sample__ error of __`r 1 - confusionMatrix(Predict, valSet$classe)$overall[[1]]`%__.
 
 ### Results
-Now the model can be applied to the independent testing data set to verify that it accurately predicts the manner in which 6 participants performed the exercises. 
+Now the model can be applied to the independent testing data set to verify that it accurately predicts the manner in which 6 participants performed the exercises.
+
 #### Pre-process the Testing Data
 Firstly, the Data Transformation and Pre-processing methodology needs to be applied to the independent testing data set.
 
@@ -188,14 +193,14 @@ Final <- predict(rfModel, testData)
 ```
 
 ### Conclusion
-When applied to the 20 test cases, the Random Forest Machine learning algorithm correctly predicted the manner in which the exercises were preformed.
+When applied to the 20 test cases within the testing data set, the Random Forest Machine learning algorithm correctly predicts the manner in which the exercises were preformed.
 
 ```{r Results, echo = TRUE}
 Final
 ```
 
 ### References
-Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6.
+Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6. 
 
 [^website]: http://groupware.les.inf.puc-rio.br/har
 [^training]: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
