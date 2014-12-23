@@ -7,9 +7,10 @@ output: pdf_document
 
 ##Chapter 1
 ###Exercise 1 - Create and Subset a data.table
+####Instructions
 
 * Create a data.table __my_first_data_table__ with a column x = c("a","b","c","d","e") and a column y = c(1,2,3,4,5). Use data.table().  
-* Create a two-column data.table DT that contains the four integers 1,2,1,2 in the first column a and the letters A,B,C,D in the second column b. Use recycling.  
+* Create a two-column data.table called DT that contains the four integers 1,2,1,2 in the first column a and the letters A,B,C,D in the second column b. Use recycling.  
 * Select the third row of DT and just print the result to the console.  
 * Select the second and third rows without using any comma at all and print the result to the console.  
 
@@ -33,6 +34,9 @@ DT[2:3]
 ```
 
 ###Exercise 2 - Get to know data.table
+__Remember__ that the special symbol __.N__ contains the number of rows. You can put this symbol inside square brackets
+
+####Instructions
 * Select the penultimate row of the table. Make use of .N for this.  
 * Return the column names of the data.table.  
 * Return the number of rows and number of columns of the data.table.  
@@ -52,10 +56,9 @@ DT[c(2,2,3)]
 ```
 
 ###Exercise 3 - Subsetting data tables
-__Remember__ "Take DT, subset rows using i, then calculate j grouped by by".
+__Remember__ the phrase "Take DT, subset rows using __i__, then calculate __j__ grouped by __by__". Also, __j__ can be used to select columns by wrapping the column names in __.()__. In addition to selecting columns, you can also call functions on them as if the columns were variables.
 
-In the video, the second argument j was covered. j can be used to select columns by wrapping the column names in .(). In addition to selecting columns, you can also call functions on them as if the columns were variables.
-
+####Instructions
 * Create a subset columns B and C for rows 1 and 3, and print the result to the console.
 * Assign to ans a data.table that contains two columns: B and val, where val is the product of A and C.
 * Assign to answ another data.table answ <- DT[, .(B, val = __BLANK__ )]. Fill in the blanks such that answ equals data.table(B=c("a", "b", "c", "d", "e", "a", "b", "c", "d", "e"), val = as.integer(c(6,7,8,9,10,1,2,3,4,5))).
@@ -76,3 +79,70 @@ answ <- DT[, .(B, val = c(C, A))]
 
 ```
 
+###Exercise 4 - The "by" basics
+__Remember__ if you supply a __j__ expression and a by list of expressions, the __j__ expression is repeated for each __by__ group.
+
+####Instructions
+* Convert the iris dataset to a data.table called DT.
+* For each Species, what is the mean Sepal.Length?
+* Do exactly the same as in the instruction above, but this time group by the first letter of the Species name instead.
+
+```{r exercise_4, echo = TRUE}
+# load the iris dataset
+data(iris)
+
+# iris as data.table
+DT <- as.data.table(iris)
+
+# mean `Sepal.Length`
+DT[, mean(Sepal.Length), by = .(Species)]
+
+# Group by the first letter
+DT[, mean(Sepal.Length), by = substring(Species, 1, 1)]
+# Note: substring(x, start, stop) extracts or replaces the substrings in a
+# character vector.
+
+```
+
+###Exercise 5 - Using .N and by
+__Remember__ that __.N__ can be used in __i__ and that it designates the number of rows in a data.table. There, it is typically used for returning the last row or an offset from it. __.N__ can be used in __j__ too and designates the number of rows in this group. The latter is especially powerful when you can use it in combination with by.
+
+####Instructions
+* Group the specimens by Sepal area (to the nearest 10 cm2) and count how many occur in each group.
+* Using the answer to the above question, you can now name the group Area and the count Count.
+
+```{r exercise_5, echo = TRUE}
+# Use the data.table DT for the iris dataset that was used in Exercise 4.
+
+# Group the specimens by Sepal area (to the nearest 10 cm2) and count how many
+# occur in each group. For example: DT[,___, by=10*___(___*___ / 10)]
+DT[, .N, by = 10 * round(Sepal.Length * Sepal.Width/10)]
+
+# Now name the output columns `Area` and `Count`
+DT[, .(Count = .N), by = .(Area = 10 * round(Sepal.Length * Sepal.Width/10))]
+
+```
+
+###Exercise 6 - Return multiple numbers in __j__.
+In the previous exercises we returned single numbers in __j__. However, this is not necessary, because you do not have to return only single numbers in __j__.
+
+####Instructions
+* Given a new DT, calculate cumulative sum of C in column C while you group by A,B. Store it in a new data.table DT2 with 3 columns A,B and C.
+* Select from DT2, the last two values of C in column C while you group by A alone. Use default output names.
+
+```{r exercise_6, echo = TRUE}
+# Create a new data.table called DT
+set.seed(1L)
+DT <- data.table(A = rep(letters[2:1], each = 4L), B = rep(1:4, each = 2L),
+                 C = sample(8))
+DT
+
+# DT2
+DT2 <- DT[, .(C = cumsum(C)), by = .(A, B)]
+# Note: cumsum(x) returns a vector whose elements are the cumulative sums of
+# the elements of the argument
+
+# Now the last two values of C from DT2 while you group by A
+DT2[, .(C = tail(C,2)), by = A] 
+
+```
