@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ##Chapter 1
-###Exercise 1 - Create and Subset a data.table
+###Exercise 1 - Create and Subset a __data.table__
 ####Instructions
 
 * Create a data.table __my_first_data_table__ with a column x = c("a","b","c","d","e") and a column y = c(1,2,3,4,5). Use data.table().  
@@ -14,7 +14,7 @@ output: pdf_document
 * Select the third row of DT and just print the result to the console.  
 * Select the second and third rows without using any comma at all and print the result to the console.  
 
-```{r exercise_1, echo = TRUE}
+```{r exercise_1_1, echo = TRUE}
 library("data.table")
 
 # Create your first data.table 
@@ -33,7 +33,7 @@ DT[2:3]
 
 ```
 
-###Exercise 2 - Get to know data.table
+###Exercise 2 - Get to know __data.table__
 __Remember__ that the special symbol __.N__ contains the number of rows. You can put this symbol inside square brackets
 
 ####Instructions
@@ -42,7 +42,7 @@ __Remember__ that the special symbol __.N__ contains the number of rows. You can
 * Return the number of rows and number of columns of the data.table.  
 * Select row 2 twice and row 3, returning a data.table with three rows where row 2 is a duplicate of row 1.  
 
-```{r exercise_2, echo = TRUE}
+```{r exercise_1_2, echo = TRUE}
 # Print the penultimate row of DT using `.N`
 DT[.N-1]
 
@@ -63,7 +63,7 @@ __Remember__ the phrase "Take DT, subset rows using __i__, then calculate __j__ 
 * Assign to ans a data.table that contains two columns: B and val, where val is the product of A and C.
 * Assign to answ another data.table answ <- DT[, .(B, val = __BLANK__ )]. Fill in the blanks such that answ equals data.table(B=c("a", "b", "c", "d", "e", "a", "b", "c", "d", "e"), val = as.integer(c(6,7,8,9,10,1,2,3,4,5))).
 
-```{r exercise_3, echo = TRUE}
+```{r exercise_1_3, echo = TRUE}
 # Create the data,table DT
 DT <- data.table(A = 1:5, B = c("a", "b", "c", "d", "e"), C = 6:10)
 
@@ -79,7 +79,7 @@ answ <- DT[, .(B, val = c(C, A))]
 
 ```
 
-###Exercise 4 - The "by" basics
+###Exercise 4 - The __by__ basics
 __Remember__ if you supply a __j__ expression and a by list of expressions, the __j__ expression is repeated for each __by__ group.
 
 ####Instructions
@@ -87,7 +87,7 @@ __Remember__ if you supply a __j__ expression and a by list of expressions, the 
 * For each Species, what is the mean Sepal.Length?
 * Do exactly the same as in the instruction above, but this time group by the first letter of the Species name instead.
 
-```{r exercise_4, echo = TRUE}
+```{r exercise_1_4, echo = TRUE}
 # load the iris dataset
 data(iris)
 
@@ -104,14 +104,14 @@ DT[, mean(Sepal.Length), by = substring(Species, 1, 1)]
 
 ```
 
-###Exercise 5 - Using .N and by
+###Exercise 5 - Using __.N__ and __by__
 __Remember__ that __.N__ can be used in __i__ and that it designates the number of rows in a data.table. There, it is typically used for returning the last row or an offset from it. __.N__ can be used in __j__ too and designates the number of rows in this group. The latter is especially powerful when you can use it in combination with by.
 
 ####Instructions
 * Group the specimens by Sepal area (to the nearest 10 cm2) and count how many occur in each group.
 * Using the answer to the above question, you can now name the group Area and the count Count.
 
-```{r exercise_5, echo = TRUE}
+```{r exercise_1_5, echo = TRUE}
 # Use the data.table DT for the iris dataset that was used in Exercise 4.
 
 # Group the specimens by Sepal area (to the nearest 10 cm2) and count how many
@@ -130,7 +130,7 @@ In the previous exercises we returned single numbers in __j__. However, this is 
 * Given a new DT, calculate cumulative sum of C in column C while you group by A,B. Store it in a new data.table DT2 with 3 columns A,B and C.
 * Select from DT2, the last two values of C in column C while you group by A alone. Use default output names.
 
-```{r exercise_6, echo = TRUE}
+```{r exercise_1_6, echo = TRUE}
 # Create a new data.table called DT
 set.seed(1L)
 DT <- data.table(A = rep(letters[2:1], each = 4L), B = rep(1:4, each = 2L),
@@ -143,6 +143,138 @@ DT2 <- DT[, .(C = cumsum(C)), by = .(A, B)]
 # the elements of the argument
 
 # Now the last two values of C from DT2 while you group by A
-DT2[, .(C = tail(C,2)), by = A] 
+DT2[, .(C = tail(C, 2)), by = A] 
+
+```
+
+##Chapter 2
+###Exercise 1 - Create and Subset a __data.table__
+__Remember__ that chaining allows concatenating multiple operations and follows because the operations are in the same order. Furthermore, it helps to avoid the creation of unnecessary temporary variables (which could quickly clutter one's workspace).
+
+####Instructions
+* In the Chapter 1, Exercise 6, we calculated DT2 by taking the cumulative sum of C while grouping by A,B. Next, you selected from DT2 the last two values of C while grouping by A alone. Do this again, but this time use the concept of chaining instead.
+
+```{r exercise_2_1, echo = TRUE}
+# DT
+set.seed(1L)
+DT <- data.table(A = rep(letters[2:1], each = 4L), B = rep(1:4, each = 2L),
+                 C = sample(8)) 
+
+# Previous exercise:
+# DT2 <- DT[, .(C = cumsum(C)), by = .(A, B)]
+# DT2[, .(C = tail(C, 2)), by = A]
+# Now use chaining
+DT[,.(C = cumsum(C)), by = .(A, B)][, .(C = tail(C,2)), by = A]
+
+```
+
+###Exercise 2 - Chaining the __iris__ dataset
+Once the __iris__ dataset is converted to a data.table called DT. Let us see how you can use chaining to simplify manipulations and calculations with the DT.
+
+####Instructions
+* Get the median of all the four columns Sepal.Length, Sepal.Width, Petal.Length and Petal.Width while you group by Species. Give them the same names. Next, order Species in descending order using chaining.
+
+__NOTE:__ This is deliberately difficult and a little bit repetitive. Also errors can easily be made, especially if there are a large anount of colums in the dataset. See the next exercise for a simpler solution.
+
+```{r exercise_2_2, echo = TRUE}
+# load the iris dataset
+data(iris)
+
+# iris as data.table
+DT <- as.data.table(iris)
+
+# iris
+DT[, .(Sepal.Length = median(Sepal.Length), Sepal.Width = median(Sepal.Width),
+       Petal.Length = median(Petal.Length), Petal.Width = median(Petal.Width)),
+   by = Species][order(-Species)]
+# Note the "-" before Species to denote descending order.
+
+```
+
+###Exercise 3 - Progamming time vs. readability
+__Remember__ the data.table package provides a special in-built variable __.SD__. It refers to the subset of data for each group. Additionally, it is a good idea to make use of familiar functions from base R to reduce programming time without losing readability.  
+
+####Instructions
+* Get the mean of columns y and z grouped by x by using .SD.
+* Get the median of columns y and z grouped by x by using .SD.
+
+```{r exercise_2_3, echo = TRUE}
+# Create a sample data.table
+DT <- data.table(x = c(2, 1, 2, 1, 2, 2, 1), y = c(1, 3, 5, 7, 9, 11, 13), 
+                 z = c(2, 4, 6, 8, 10, 12, 14))
+DT
+
+# Mean of columns
+DT[, lapply(.SD, mean), by = x]
+
+# Median of columns
+DT[, lapply(.SD, median), by = x]
+
+```
+
+###Exercise 4 - Introducing __.SDcols__
+__.SDcols__ specifies the columns of a __data.table__ that are included in __.SD__. Using __.SDcols__ comes in handy if you have too many columns and you want to perform a particular operation on a particular subset of the columns (instead from the grouping variable columns). Look at __?data.table__ for more info on __.SDcols__.
+
+####Instructions
+* Calculate the sum of the Q columns using .SD and .SDcols. Use 2:4.
+* You can of course set .SDcols to be the result of a function call. This time calculate the sum of columns H1 and H2 using paste0().
+* Finally, select all but the first row of groups 1 and 2, returning only the grp column and the Q columns. Use -1 in i of .SD and use paste0() again. Type desired_result to better understand what you need to do.
+
+```{r exercise_2_4, echo = TRUE}
+# Create a sample data.table
+DT <- data.table(grp = c(6, 6, 8, 8, 8), Q1 = c(2, 2, 3, 5, 2),
+                 Q2 = c(5, 5, 4, 4, 1), Q3 = c(2, 1, 4, 2, 4),
+                 H1 = c(3, 4, 5, 2, 4), H2 = c(5, 2, 4, 1, 2))
+DT
+
+# Calculate the sum of the Q columns
+DT[, lapply(.SD, sum), .SDcols = 2:4]
+
+# Calculate the sum of columns H1 and H2 
+DT[, lapply(.SD, sum), .SDcols = paste0("H", 1:2)]
+# Note: paste() converts its arguments to character strings and concatenates
+# them (separating them by the string given by sep). paste0() is equivalent to
+# paste(..., sep = "", collapse), 
+
+# Select all but the first row of groups 1 and 2, returning only the grp column and the Q columns. 
+DT[, .SD[-1], by = grp, .SDcols = paste0("Q", 1:3)]
+
+```
+
+###Exercise 5 - Putting it together: __lapply__, __.SD__, __.SDcols__, __.N__
+__Remember__ that __lapply()__ and __.SD__ return a list, and that __.N__ is an inbuilt variable that returns an integer vector of length 1. If __j__ returns a list then a data.table is returned. To combine items together you already know to use c(). Combining a list with a vector makes a new list one longer. When you select __.N__ on its own, it automatically gets named N in the output for convenience when chaining.
+
+####Instructions
+* Get the sum of all columns x, y and z and the number of rows in each group while grouping by x. Your answer should be identical to the result stored in desired_result_1.
+* Get the cumulative sum of column x and y while grouping by x and z > 8 such that the answer looks like the result that was stored in the variable desired_result_2.
+* Use chaining to get the maximum of both x and y by combining the result that was obtained in the previous instruction and group by by1.
+
+```{r exercise_2_5, echo = TRUE}
+# Manaually pre-load the sample data
+DT <- data.table(x = c(2, 1, 2, 1, 2, 2, 1), y = c(1, 3, 5, 7, 9, 11, 13),
+                 z = c(2, 4, 6, 8, 10, 12, 14))
+DT
+
+# Sum of all columns and the number of rows
+# desired_result_1
+#   x x  y  z N
+#1: 2 8 26 30 4
+#2: 1 3 23 26 3
+DT[, c(lapply(.SD, sum), .N), by = x, .SDcols = c("x", "y", "z")]
+
+# Cumulative sum of column `x` and `y` while grouping by `x` and `z > 8`
+# desired_result_2
+#   by1   by2 x  y
+#1:   2 FALSE 2  1
+#2:   2 FALSE 4  6
+#3:   1 FALSE 1  3
+#4:   1 FALSE 2 10
+#5:   2  TRUE 2  9
+#6:   2  TRUE 4 20
+#7:   1  TRUE 1 13
+DT[, lapply(.SD, cumsum), by= .(by1 = x, by2 = z > 8), .SDcols = c("x", "y")]
+
+# Chaining
+DT[, lapply(.SD, cumsum), by =.(by1 = x, by2 = z > 8), .SDcols = 1:2][,lapply(.SD, max), by = by1, .SDcols = c("x", "y")]
 
 ```
