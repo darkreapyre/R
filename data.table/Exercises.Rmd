@@ -272,9 +272,71 @@ DT[, c(lapply(.SD, sum), .N), by = x, .SDcols = c("x", "y", "z")]
 #5:   2  TRUE 2  9
 #6:   2  TRUE 4 20
 #7:   1  TRUE 1 13
-DT[, lapply(.SD, cumsum), by= .(by1 = x, by2 = z > 8), .SDcols = c("x", "y")]
+DT[, lapply(.SD, cumsum), by = .(by1 = x, by2 = z > 8), .SDcols = c("x", "y")]
 
 # Chaining
-DT[, lapply(.SD, cumsum), by =.(by1 = x, by2 = z > 8), .SDcols = 1:2][,lapply(.SD, max), by = by1, .SDcols = c("x", "y")]
+DT[, lapply(.SD, cumsum), by = .(by1 = x, by2 = z > 8), .SDcols = 1:2][, lapply(.SD, max), by = by1, .SDcols = c("x", "y")]
+
+```
+
+###Exercise 6 - Adding, Updating and removing columns (LHS := RHS)
+__Remember__ that __:=__ is defined for use in __j__ only, and there are two ways of using it.  
+The first is the __LHS := RHS__ form, where __LHS__ is a character vector of column names and __RHS__ is the corresponding value.
+
+####Instructions
+* Add a column Total by reference containing sum(B) for each group in column A.
+* Add 1 to column B just in rows 2 and 4.
+* Add a new column Total2 that contains sum(B) grouped by A but just over rows 2,3 and 4.
+* Remove the Total column. The R function [[ is useful to select a single column by name or number with the result returned as a vector. Use [[ to select the third column.
+
+__NOTE:__ that for the second instruction in j the performance goes up if you coerce RHS to integer yourself via 1L or via as.integer(). 
+
+```{r exercise_2_6, echo = TRUE}
+# Manaually pre-load the sample data
+DT <- data.table(A = c("a", "a", "a", "b", "b"), B = 1:5)
+DT
+
+# Column `Total` by reference
+DT[, Total := sum(B), by = A]
+DT
+
+# Add 1 to column `B`
+DT[c(2, 4), B := B + 1L]
+DT
+
+# Add a new column `Total2`
+DT[2:4, Total2 := sum(B), by = A]
+DT
+
+# Remove the `Total` column
+DT[, Total := NULL]
+DT
+
+# Select the third column using `[[`
+DT[[3]]
+
+```
+
+###Exercise 7 - The Function form of :=
+The second way to use __:=__ is a function form. The nice thing about a function form is that you can get each right hand side (RHS) alongside the left hand side (LHS) so it is easier to read.
+
+####Instructions
+* Update B with B+1 and add a new column C with A+B, and D with constant 2.
+* Given myCols = c("B","C"), delete those columns.
+* Delete column D by its number (2) rather than its name (D).
+
+```{r exercise_2_7, echo = TRUE}
+# Manaually pre-load the sample data
+DT <- data.table(A=c(1,1,1,2,2), B=1:5)
+DT
+
+# Update `B`, add `C` and `D`
+
+
+# Delete `myCols`
+myCols = c("B","C")
+
+# Delete column 2 by number
+
 
 ```
