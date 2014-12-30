@@ -331,12 +331,76 @@ DT <- data.table(A=c(1,1,1,2,2), B=1:5)
 DT
 
 # Update `B`, add `C` and `D`
-
+DT[, `:=` (B = B + 1, C = A + B, D = 2)]
+DT
 
 # Delete `myCols`
 myCols = c("B","C")
+DT[, (myCols) := NULL]
+DT
 
 # Delete column 2 by number
+DT[, 2 := NULL]
+DT
 
+```
+
+###Exercise 8 - Using set()
+__Remember__ that __set()__ can not do grouped operations.
+
+####Instructions
+* Loop through columns 2,3 and 4, and for each one select 3 rows at random and set the value of that column to NA.
+* Change the column names to lower case. When setnames() is passed just one input vector, that needs to be all the new names.
+
+```{r exercise_2_8, echo = TRUE}
+set.seed(1)
+
+# Manually create DT
+DT <- data.table(A = c(2, 2, 3, 5, 2, 5, 5, 4, 4, 1),
+                 B = c(2, 1, 4, 2, 4, 3, 4, 5, 2, 4),
+                 C = c(5, 2, 4, 1, 2, 2, 1, 2, 5, 2),
+                 D = c(3, 3, 3, 1, 5, 4, 4, 1, 4, 3))
+DT
+
+# For loop with set
+for(i in 2:4)
+    set(DT, sample(10, 3), i, NA)
+
+# Change the column names to lowercase
+setnames(DT, tolower(names(DT)))
+
+# Print the new DT to the console to confirm changes
+DT
+
+```
+
+###Exercise 9 - The set() family
+__Remember__ the following:  
+1. set() is a loopable low overhead version of ":="  
+2. You can use setnames() to set or change column names  
+3. setcolorder() lets you reorder the columns of a data.table
+
+####Instructions
+* Add a postfix "_2" to all column names.
+* Change "a_2" to "A2" by names not position.
+* To end, reverse the order of the columns.
+
+```{r exercise_2_9, echo = TRUE}
+# Create the sample dataset
+DT <- data.table(a=letters[c(1,1,1,2,2)], b=1)
+DT
+
+# Postfix "_2"
+setnames(DT, paste0(names(DT), "_2"))
+DT
+
+# "a_2" to "A2"
+setnames(DT, "a_2", "A2")
+DT
+
+# Reversing order
+# NOTE: the usage of the 2:1
+setcolorder(DT, 2:1)
+DT
 
 ```
