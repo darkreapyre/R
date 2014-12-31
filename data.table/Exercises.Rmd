@@ -83,7 +83,7 @@ answ <- DT[, .(B, val = c(C, A))]
 __Remember__ if you supply a __j__ expression and a by list of expressions, the __j__ expression is repeated for each __by__ group.
 
 ####Instructions
-* Convert the iris dataset to a data.table called DT.
+* Convert the iris data set to a data.table called DT.
 * For each Species, what is the mean Sepal.Length?
 * Do exactly the same as in the instruction above, but this time group by the first letter of the Species name instead.
 
@@ -149,7 +149,7 @@ DT2[, .(C = tail(C, 2)), by = A]
 
 ##Chapter 2
 ###Exercise 1 - Create and Subset a __data.table__
-__Remember__ that chaining allows concatenating multiple operations and follows because the operations are in the same order. Furthermore, it helps to avoid the creation of unnecessary temporary variables (which could quickly clutter one's workspace).
+__Remember__ that chaining allows concatenating multiple operations and follows because the operations are in the same order. Furthermore, it helps to avoid the creation of unnecessary temporary variables (which could quickly clutter one's work space).
 
 ####Instructions
 * In the Chapter 1, Exercise 6, we calculated DT2 by taking the cumulative sum of C while grouping by A,B. Next, you selected from DT2 the last two values of C while grouping by A alone. Do this again, but this time use the concept of chaining instead.
@@ -169,12 +169,12 @@ DT[,.(C = cumsum(C)), by = .(A, B)][, .(C = tail(C,2)), by = A]
 ```
 
 ###Exercise 2 - Chaining the __iris__ dataset
-Once the __iris__ dataset is converted to a data.table called DT. Let us see how you can use chaining to simplify manipulations and calculations with the DT.
+Once the __iris__ data set is converted to a data.table called DT. Let us see how you can use chaining to simplify manipulations and calculations with the DT.
 
 ####Instructions
 * Get the median of all the four columns Sepal.Length, Sepal.Width, Petal.Length and Petal.Width while you group by Species. Give them the same names. Next, order Species in descending order using chaining.
 
-__NOTE:__ This is deliberately difficult and a little bit repetitive. Also errors can easily be made, especially if there are a large anount of colums in the dataset. See the next exercise for a simpler solution.
+__NOTE:__ This is deliberately difficult and a little bit repetitive. Also errors can easily be made, especially if there are a large amount of columns in the data set. See the next exercise for a simpler solution.
 
 ```{r exercise_2_2, echo = TRUE}
 # load the iris dataset
@@ -407,12 +407,12 @@ DT
 
 ##Chapter 3
 ###Exercise 1 - Selecting rows the data.table way
-__Remember__ that you can use column names in __i__ to select certain rows. Since selecting rows over and over again is common place with __data.table__, it is best to do a small exercise on this with the help of the familiar iris dataset. 
+__Remember__ that you can use column names in __i__ to select certain rows. Since selecting rows over and over again is common place with __data.table__, it is best to do a small exercise on this with the help of the familiar iris data set. 
 
-__NOTE:__ This is different from selecting colums and running functions on columns using __j__.
+__NOTE:__ This is different from selecting columns and running functions on columns using __j__.
 
 ####Instructions
-* Convert the iris dataset to a data.table with the same name iris
+* Convert the iris data set to a data.table with the same name iris
 * Select all the rows where Species is "virginica"
 * Select all the rows where Species is either "virginica" or "versicolor"
 
@@ -472,6 +472,161 @@ iris
 
 # Now select rows again where the area is greater than 20 square centimeters
 iris[IsLarge == TRUE]
-# Note that iris[(IsTrue)] can also be used
+# Note that iris[(IsLarge)] can also be used
+
+```
+
+###Exercise 4 - Testing the understanding of KEYs
+####Instructions
+Load the sample data.table (DT) and execute the following:
+
+```{r exercise_3_4, echo = TRUE}
+# Load the sample data.table
+DT <- data.table(A = c("b", "a", "b", "c", "a", "b", "c"),
+                 B = c(2, 4, 1, 7, 5, 3, 6),
+                 C = 6:12)
+
+```
+
+1. Select the b group using ==.
+```{r exercise_3_4_1, echo = TRUE}
+DT[A == "b"]
+
+```
+2. Set a 2 column key on A and B.
+```{r exercise_3_4_2, echo = TRUE}
+setkey(DT, A, B)
+```
+3. Select the b group again: again use ==.
+```{r exercise_3_4_3, echo = TRUE}
+DT[A == "b"]
+
+```
+
+__Note__ that the order of the rows within the b group changed, because __B__ is included in the key.  
+
+###Exercise 5 - Selecting groups or parts of groups
+The previous exercise illustrated how you can manually set a key via __setkey(DT, A, B)__. __setkey()__ will then sort the data by the columns that you specify, and change the table by reference. Having set a key will allow you to use it as a __super-charged__ rowname when doing selections for example. Arguments like __mult__ and __nomatch__ then help you to only select particular parts of groups.
+
+Furthermore, two of the instructions will require you to make use of __by=.EACHI__. This will allow you to run __j__ for each group in which each item in __i__ joins too.
+
+####Instructions
+* Select the b group without using ==.
+* Select the b and c groups.
+* Select the first row of the b and c groups using mult.
+* Use by=.EACHI and .SD to select the first and last row of the b and c groups.
+* Extend the previous command to print out the group before returning the first and last row from it.
+
+```{r exercise_3_5, echo = TRUE}
+# Create the sample data.table (DT).
+# Set the keys to `A` and `B`
+DT <- data.table(A = letters[c(2,1,2,3,1,2,3)],
+                 B = c(5,4,1,9,8,8,6), C=6:12)
+setkey(DT,A,B)
+
+# Select the `b` group
+DT["b"]
+
+# `b` and `c` groups
+DT[c("b", "c")]
+
+# The first row of the `b` and `c` group
+DT[c("b", "c"), mult = "first"]
+
+# `by=.EACHI` and `.SD` 
+DT[c("b", "c"), .SD[c(1, .N)], by = .EACHI]
+
+# Print out all the data in the two groups before you return the first and last row of each group again.  Use {} and .N 
+DT[c("b", "c"), {print(.SD); .SD[c(1, .N)]}, by = .EACHI]
+
+```
+
+###Exercise 6 - Rolling joinbs (Part one)
+__Remember__ that the roll applies to the last join column.
+
+####Instructions
+* Get the key of DT via the key() function.
+* Use the super charged row names to lookup the row where A=="b" & B==6, without using ==. Verify here that C is NA.
+* Base yourself on the query that was written in the previous instruction to return the prevailing row before this gap.
+* Similar, but this time find the nearest one.
+
+```{r exercise_3_6, echo = TRUE}
+# Load the samplke the data.table `DT`
+DT <- data.table(A = letters[c(1, 1, 2, 2, 2, 3, 3)],
+                 B = c(4, 8, 1, 5, 8, 6, 9),
+                 C = c(7, 10, 8, 6, 11, 12, 9))
+setkey(DT, A, B)
+
+# Key of `DT`
+key(DT)
+# Row where  `A=="b"` & `B==6`
+DT[.("b", 6)]
+
+# Return the prevailing row
+DT[.("b", 6), roll = TRUE]
+
+# Nearest one
+DT[.("b", 6), roll = "nearest"]
+
+```
+
+###Exercise 7 - Rolling joins (Part two)
+__Remember__ that the __rollends__ argument is actually a vector of two logical values. If you want to roll for a certain distance, you remain with the roll argument. 
+
+####Instructions
+* Look at the sequence (-2):10 for the b group.
+* Now carry the prevailing values forwards through the NA.
+* Next, carry the first observation backwards as well.
+* Finally, only roll for a distance of 2, still with rollends=TRUE. Check that only 4 and -2 now have NA. This is because they are more than 2 from the prevailing observation.
+
+__NOTE:__ The desired result should look as follows:
+
+```{r, echo = TRUE}
+#    A  B  C
+# 1: b -2 NA
+# 2: b -1 NA
+# 3: b  0 NA
+# 4: b  1  8
+# 5: b  2  8
+# 6: b  3  8
+# 7: b  4 NA
+# 8: b  5  6
+# 9: b  6  6
+#10: b  7  6
+#11: b  8 11
+#12: b  9 11
+#13: b 10 11
+
+```
+
+```{r exercise_3_7, echo = TRUE}
+# Load the samplke the data.table `DT`
+DT <- data.table(A = letters[c(1, 1, 2, 2, 2, 3, 3)],
+                 B = c(4, 8, 1, 5, 8, 6, 9),
+                 C = c(7, 10, 8, 6, 11, 12, 9))
+setkey(DT, A, B)
+
+# Look at the sequence (-2):10 for the `b` group
+DT[.("b", (-2):10)]
+
+# Carry the prevailing values forwards
+DT[.("b", (-2):10), roll = TRUE]
+
+# Carry the first observation backwards
+DT[.("b", (-2):10), roll = TRUE, rollends = TRUE]
+
+# Note that the following can also be used
+# DT[.("b", (-2):10), roll = TRUE, rollends = c(TRUE, TRUE)]
+
+# Roll for a distance of 2
+DT[.("b", (-2):10, roll = 2)]
+
+```
+
+###Exercise 8 - Rolling joins (Part three)
+If you look up the value B==20 in group A=="b" without limiting the roll, the value of column C is now __11__.
+
+```{r exercise_3_8, echo = TRUE}
+DT[.("b", 20), roll = TRUE]
 
 ```
