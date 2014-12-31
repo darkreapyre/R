@@ -345,7 +345,7 @@ DT
 
 ```
 
-###Exercise 8 - Using set()
+###Exercise 8 - Using set().
 __Remember__ that __set()__ can not do grouped operations.
 
 ####Instructions
@@ -402,5 +402,76 @@ DT
 # NOTE: the usage of the 2:1
 setcolorder(DT, 2:1)
 DT
+
+```
+
+##Chapter 3
+###Exercise 1 - Selecting rows the data.table way
+__Remember__ that you can use column names in __i__ to select certain rows. Since selecting rows over and over again is common place with __data.table__, it is best to do a small exercise on this with the help of the familiar iris dataset. 
+
+__NOTE:__ This is different from selecting colums and running functions on columns using __j__.
+
+####Instructions
+* Convert the iris dataset to a data.table with the same name iris
+* Select all the rows where Species is "virginica"
+* Select all the rows where Species is either "virginica" or "versicolor"
+
+```{r exercise_3_1, echo = TRUE}
+# iris as data.table
+iris <- as.data.table(iris) 
+
+# Species is "virginica"
+iris[Species == "virginica"]
+
+# Species is either "virginica" or "versicolor"
+iris[Species %in% c("virginica", "versicolor")]
+
+```
+
+###Exercise 2 - Removing columns and adapting column names
+In the previous exercise you needed to select certain rows out of the iris data.table based on the column names. Now you have to take your understanding of the data.table package to the next level: use standard R functions and regular expressions to manipulate your data.table by removing columns and adapting column names. To practice this, we'll do a little manipulation to prepare easier column names for the next exercise. 
+
+####Instructions  
+* Remove the "Sepal." prefix and remove the two Petal columns from the iris data.table.
+
+```{r exercise_3_2, echo = TRUE}
+# Convert iris to a data.table
+iris <- as.data.table(iris)
+
+# Remove the "Sepal." prefix... 
+# Note that gsub() performs replacement of all matches
+# of the regular expression
+setnames(iris, gsub("^Sepal[.]", "", names(iris)))
+iris
+
+# ...and remove the two `Petal` columns
+iris[, grep("^Petal", names(iris)) := NULL]
+iris
+
+```
+
+###Exercise 3 - Understanding automatic indexing
+__Remeber__ the rule that __"if i is a single variable name, it is evaluated in calling scope, otherwise inside DT's scope"__. This is a very important rule if you want to conceptually understand what is going on when using column names in __i__. Only single columns on the left of operators benefit from automatic indexing. 
+
+####Instructions
+* Select the rows where the area is greater than 20 square centimeters.
+* Add a new boolean column containing Width x Length > 20 and call it IsLarge.
+* Select the rows where IsLarge is TRUE.
+
+```{r exercise_3_3, echo = TRUE}
+# Use the data.table iris that is already loaded
+iris
+
+# Area is greater than 20 square centimeters
+iris[Width * Length > 20]
+
+# Now demonstrate the above conceptually
+# Add new boolean column
+iris[, IsLarge := Width * Length > 20]
+iris
+
+# Now select rows again where the area is greater than 20 square centimeters
+iris[IsLarge == TRUE]
+# Note that iris[(IsTrue)] can also be used
 
 ```
