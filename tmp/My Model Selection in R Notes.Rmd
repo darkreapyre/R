@@ -38,6 +38,8 @@ with(Hitters, sum(is.na(Salary)))
 
 Best Subset Regression looks at all the possible regression models of differnt subsets of size and then looks for the best model of each size. It's output is a sequence of models, wich is the best for each particular size. The __leaps__ package allows this to be done compuationally in __R__, specifically the __regsubsets()__ function. 
 
+## Finding the best model
+
 ```{r regfit, echo = TRUE}
 #Execute the best subset regression with Salary as the response
 regfit <- regsubsets(Salary~., data = Hitters)
@@ -57,8 +59,61 @@ regfit.full <- regsubsets(Salary~., data = Hitters, nvmax = 19)
 fit.summary <- summary(regfit.full)
 fit.summary
 
-#Plot
-plot(fit.summary$cp, xlab = "No. of Variables", ylab = "CP Statistic")
+#Plot CP Statistic 
+plot(fit.summary$cp, xlab = "No. of Variables",
+     ylab = "Estimate of Prediction Error (CP)")
 
 ```
 
+__Note__ that the idea is to pick a model with the lowest __CP__ and as can be seen from the plot, the model with __10__ variables is the smallest. This can be verified by using the __which.min()__ function.  
+
+Index of the smallest element of the CP component: __`r which.min(fit.summary$cp)`__
+
+
+```{r point.plot, echo = TRUE}
+#Redo the plot
+plot(fit.summary$cp, xlab = "No. of Variables",
+     ylab = "Estimate of Prediction Error (CP)")
+#Highlite the point 10
+points(10, fit.summary$cp[10], pch = 20, col = "red")
+
+```
+
+__Note__ that the __regsubsets()__ function has it's own, built-in plotting method. 
+
+```{r regfit.plot, echo = TRUE}
+#Plot using the regsubsets() plotting method
+plot(regfit.full, scale = "Cp")
+
+```
+
+The plot above is a pattern picture where __Y Axis__ shows the __Cp Statistic__ where small is good, so __5__ corresponds to the model of size __10__. For each value, black squares indicate that the particular variable is "in" while the white squares indicate the particular variable is "out". __Note__ that "bad" cp's correspond to all models that have all the varbiables "in" or hardly any varibles "in".  
+
+## Determining the coefficients
+
+Having choosen model __10__, there is a method for __regsubsets()__ to display the coefficients of the particular model.
+
+```{r coef, echo = TRUE}
+#show the coefficients for model indexed 10
+coef(regfit.full, 10)
+
+```
+
+# Forward Stepwise Selection
+## Overview
+
+Best Subset Regression is quite agressive in that it looks at ALL possible subsets, Forward Stepwise Selection on the other hand is a greedy algorithm in that each time it runs, it includes the next best variable BUT produces a nested sequence. Therefore it is a much "less adventurous" search, it just adds the next best variable tht fits the most. 
+
+## Finding the best Model
+
+Here we continue to use the __regsubsets()__ function, but we specify the __method = forward__ option.
+
+```{r regfit.fwd, echo = TRUE}
+#execute regsubsets() with forward option
+regfit.fwd <- regsubsets(Salary~., data = Hitters, nvmax = 19, method = "forward")
+summary(regfit.fwd)
+
+#plot the fit
+plot(regfit.fwd, scale = "Cp")
+
+```
