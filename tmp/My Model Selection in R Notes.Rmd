@@ -113,7 +113,81 @@ Here we continue to use the __regsubsets()__ function, but we specify the __meth
 regfit.fwd <- regsubsets(Salary~., data = Hitters, nvmax = 19, method = "forward")
 summary(regfit.fwd)
 
+```
+
+__Note__ how the models that are selected are exactly nested. So each new model includes all the variables that were before plus one new one.
+
+## Plotting the "CP Statistic"
+
+```{r fwd.plot, echo = TRUE}
 #plot the fit
 plot(regfit.fwd, scale = "Cp")
 
 ```
+
+__Note__ that the resulting plot looks very similar to what we saw with "Best Subsets" with the same structure around the small end.
+
+# Model Selection using a Validation Set
+## Overview
+
+Here we pick a subset of the variables and put them asside to be used as a validation set and the rest will be used as a training data set. This way we can choose a good subset model. 
+
+__Note: This approach is slightly different from the approach used in the Text Book.__
+
+## Creating the Validation and Test Sets
+
+Since there are __`r dim(Hitters)[1]`__ rows of data, we break it down into $\frac{2}{3}$ __Training__ and $\frac{1}{3}$ __Test__. So $\frac{2}{3}$ is approcimately __180__ observations.
+
+```{r validation, echo = TRUE}
+#Set the seed
+set.seed(1)
+
+#Create the Training set by taking a sample of size 180
+train <- sample(seq(dim(Hitters)[1]), 180, replace = FALSE)
+
+#Create the fit on the data indexed byt the rows in "train"
+regfit.fwd <- regsubsets(Salary~., data = Hitters[train, ],
+                         nvmax = 19, method = "forward")
+```
+
+## Making Predictions
+
+Now we make predictions on the observations on the __Test__ set. Since we already know that there are __19__ subset models, we set up vectors to record the errors since there is no "predict" method available for __regsubsets()__.
+
+```{r predict, echo = TRUE}
+#create the vector to record errors
+errors <- rep(NA, 19)
+
+#Create the "X" matrix corresponding to the validation dataset
+x.test <- model.matrix(Salary~., data = Hitters[-train, ]) #Note -train
+
+#Make the predictions for each model
+for(i in 1:length(errors)){
+        #Exctract the coefficients for each model of size i
+        c <- coef(regfit.fwd, id = i)
+        #Manual predictoin 
+        pred <- x.test[, names(c)]%*%c #Matrix multiply by coef. vector
+        #Populate the errors vector with the mean squared error
+        errors[i] <- mean((Hitters$Salary[-train] - pred)^2)
+}
+
+#plot the root mean squared error
+plot(sqrt(errors), ylab = "Root MSE", ylim = c(300, 400), pch = 19, type = "b")
+
+```
+
+__Note__ the plot above is a plot of the validation error. The plot is slightly "jumpy", which idicates noise. The minimum error seems to be around __5__. The __10__ that we chose previously is a slightly higher then the minimum.
+
+Next we overlay the Residual Sum of Squares on the same plot.
+
+```{r RSS, echo = TRUE}
+#Recreate the plot
+plot(sqrt(errors), ylab = "Root MSE", ylim = c(300, 400), pch = 19, type = "b")
+
+#add points for the RSS NULL MODEL???????
+points(sqrt(regfit.fwd$rss[-1]/180), col = "blue", pch = 19, type = "b")
+
+```
+
+
+__NULL MODEL???????__
