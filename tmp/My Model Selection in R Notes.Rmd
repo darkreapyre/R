@@ -154,7 +154,7 @@ regfit.fwd <- regsubsets(Salary~., data = Hitters[train, ],
 
 Now we make predictions on the observations on the __Test__ set. Since we already know that there are __19__ subset models, we set up vectors to record the errors since there is no "predict" method available for __regsubsets()__.
 
-```{r predict, echo = TRUE}
+```{r manual.predict, echo = TRUE}
 #create the vector to record errors
 errors <- rep(NA, 19)
 
@@ -163,10 +163,14 @@ x.test <- model.matrix(Salary~., data = Hitters[-train, ]) #Note -train
 
 #Make the predictions for each model
 for(i in 1:length(errors)){
-        #Exctract the coefficients for each model of size i
+        #Exctract the coefficients for each model of size id = i
         c <- coef(regfit.fwd, id = i)
-        #Manual predictoin 
-        pred <- x.test[, names(c)]%*%c #Matrix multiply by coef. vector
+        #Manual predictoin
+        #The coefficient vector returns the subset of variables used in model i
+        #Index ther names returned to get the right elements in x.text, the supbset
+        #of colums in x.test that correspond to variables in the current coefficient
+        #vector.
+        pred <- x.test[, names(c)]%*%c #Matrix multiply these elements multiply by coef. vector
         #Populate the errors vector with the mean squared error
         errors[i] <- mean((Hitters$Salary[-train] - pred)^2)
 }
@@ -176,18 +180,38 @@ plot(sqrt(errors), ylab = "Root MSE", ylim = c(300, 400), pch = 19, type = "b")
 
 ```
 
-__Note__ the plot above is a plot of the validation error. The plot is slightly "jumpy", which idicates noise. The minimum error seems to be around __5__. The __10__ that we chose previously is a slightly higher then the minimum.
+__Note__ that the plot above is a plot of the validation error. The plot is slightly "jumpy", which idicates noise. The minimum error seems to be around __5__. The __10__ that we chose previously is a slightly higher then the minimum.
 
 Next we overlay the Residual Sum of Squares on the same plot.
+
 
 ```{r RSS, echo = TRUE}
 #Recreate the plot
 plot(sqrt(errors), ylab = "Root MSE", ylim = c(300, 400), pch = 19, type = "b")
 
-#add points for the RSS NULL MODEL???????
-points(sqrt(regfit.fwd$rss[-1]/180), col = "blue", pch = 19, type = "b")
+#add points for the RSS value for comparison less NULL Model
+points(sqrt(regfit.fwd$rss[-1]/180), col = "blue", pch = 19, type = "b") #Note [-1]
+legend("topright", legend = c("Training", "Validation"), col = c("blue", "black"), pch = 19)
 
 ```
 
+__NOTE:__ When overlaying the __Residual Sum of Squares__ on the same plot, We remove the first model. This corresponds to the __NULL__ model which was not included in the manual prediction. Additionally, the __Residual Sum of Squares__ (as it must do), decreases because Forward Stepwise Selection includes that variable that improves the "fit" the most. So by definition it must decrease to show the improved __RSS__ on the training data. 
 
-__NULL MODEL???????__
+Since __regsubsets()__ doesn't inlude a __predict()__ method and since the process is manual, we will cerate a __predict()__ function to be used in the future. 
+
+```{r predict, echo = TRUE}
+predict.regsubsets <- function(object,newdata, id, ...){
+    #Take the foirmula from initial call on the fitted model e.g. Salary~.
+    form <- as.formula(object$call[[2]])
+    #Create a matrix of the model
+    m <- model.matrix(form, newdata)
+    #Extract the coefficients
+    c <- coeff(object, id = id)
+    #Perform the MAtrix Multiplication
+    m[, names(c)]%*%c
+}
+
+```
+
+# Model Selection by Cross-Validation 
+## Overview
