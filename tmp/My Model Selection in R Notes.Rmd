@@ -13,6 +13,7 @@ The data for this exercise will be from the __ISLR__ package, specifically the _
 # Load the required packages
 require(ISLR)
 require(leaps)
+require(glmnet)
 
 #View the data
 summary(Hitters)
@@ -206,7 +207,7 @@ predict.regsubsets <- function(object,newdata, id, ...){
     #Create a matrix of the model
     m <- model.matrix(form, newdata)
     #Extract the coefficients
-    c <- coeff(object, id = id)
+    c <- coef(object, id = id)
     #Perform the MAtrix Multiplication
     m[, names(c)]%*%c
 }
@@ -215,3 +216,103 @@ predict.regsubsets <- function(object,newdata, id, ...){
 
 # Model Selection by Cross-Validation 
 ## Overview
+Cross-validation is one of the preferred methods for doing model selection. In this example, we will use 10-fold Cross-validation, where we take 10 samples, with each observation being assigned a fold number. Thus 10 folds.
+
+## Model Fit and Predictions
+
+```{r 10.fold, echo = TRUE}
+#Set the seed
+set.seed(11)
+
+#Create the folds vector of 1 to 10, with the length equal to the number of row in Hitters
+folds <- sample(rep(1:10, length = nrow(Hitters)))
+
+#Display the random assignnment of folds to each of the observations in Hitters
+folds
+table(folds)
+
+#Create the MAtrix to contain the cross-validatio errors (10 rows, 19 colums)
+cv.errors <- matrix(NA, 10, 19)
+
+#Double loop
+for(k in 1:10){
+    #Fit the regsubsets() model with Salary as a reponse and the training data is all the
+    #observations whos fold id is not equal to k i.e. train on all the observations except
+    #those in the kth fold.
+    best.fit <- regsubsets(Salary~., data = Hitters[folds!=k, ], nvmax = 19, method = "forward")
+    
+    #Iterate through each of the subsets and use the predict() method to make predictions on 
+    #the observations whose fold id is equal to k.
+    
+    ##########################################################################################
+    # Note that the predict() function is called and not predict.regsubsets(), bcause this   #
+    # was written in a way hat the generic predict() function uderstands. The first argument #
+    # is best.bit, which is a regsubsets() object so the generic predict() funciton knows to #
+    # find the method which is predict.regsubsets().                                         #
+    ##########################################################################################
+    for(i in 1:19){
+    pred <- predict(best.fit, Hitters[folds == k, ], id = i)
+    
+    #Compute the Mean Squared Error of the predictions and assign it to the kth row of cv.errors
+    cv.errors[k, i] <- mean((Hitters$Salary[folds == k] - pred)^2)
+    
+    }
+}
+
+```
+
+## Process the output
+
+To process the output, we create a matrix with the means of each column. __Remember__ that there are __10__ rows and each row was the Mean Squared Error for a particular fold, but we want to average those down each colums. Then use the square root to get the Root Mean Squared Error.
+
+```{r rmse, echo = TRUE}
+#Create the output matrix
+rmse.cv <- sqrt(apply(cv.errors, 2, mean))
+
+#Plot the result
+plot(rmse.cv, pch = 19, type = "b")
+
+```
+
+__Note__ that the curve is quite as "jumpy" as the validation curve because this is averaged over the full training set, done fold by fold and then avergaed, so it's smoother. This seems to favor models of size __11__ or __12__.
+
+# Ridge Regresson and Lasso 
+## Overview
+
+For this section we use the __glmnet__ package. This package is used for fitting __Ridge__ models, __Lasso__ models and a whole class of models in-between (__elasticnet__).  
+
+__Note__ that __glmnet__ doesn't use a formaula language, so we are required to give it a matrix of predictors and a response vector which need to be created.
+
+```{r pre-req, echo = TRUE}
+#Create x as the predictor matrix
+x <- model.matrix(Salary~. -1, data = Hitters)
+
+#Create y as the response vector
+y <- Hitters$Salary
+
+```
+
+## Fit a Ridge Regression Model
+
+The fist model we will fit it the __Ridge Regression Model__. This is achieved by calling __glmnet__ with __alpha = 0__, which is the __Ridge__, while __alpha = 1__ is the __Lasso__. (See the help file). 
+
+__Note:__ For alpha's between __0__ and __1__ you get elastic net models, in-between __Ridge__ and __Lasso__. There is also a __cv.glmnet()__ function that will do cross-validation.
+
+```{r fit.ridge, echo = TRUE}
+#Fit the Ridge Model
+fit.ridge <- glmnet(x, y, alpha = 0)
+
+#Plot the fit
+plot(fit.ridge, xvar = "lambda", label = TRUE)
+
+```
+
+The above is a plot as a function of log of lambda and the coefficients. __Ridge Regression__ is penalizefd by the __Sum of Squares__ of the coefficients, basivally penalties put on the sum of square of the coefficients which is controlled by the parameter lambda. So the criteria for __Ridge Regression__ is:
+
+$RSS+\Lambda\sum\limits_{j=1}^p\beta_{j}^2$
+
+So it's trying to minimize the __Residual Sum of Squares__, BUT its been modified by a penalty of the __Sum of Squares__ of the coefficients. So if lambda is big, we want the sum of squares of the coefficients to be small so that it shrinks the coefficients towards zero. As lambda gets very big, the coefficients will all be zero.
+
+So what __glmnet__ does is it develops a whole path of models on a grid of values of lambda (about 100 values of lambda). So from the plot, when the log of lambda is __12__, all the coefficients are essentially zero. As we relax lambda, the coefficients grow away from zero (in a smooth way) and teh sum of squares of the coefficients get bigger until we reach a point where lambda is effectivkey zero and the coefficients are unregularized.
+
+Unlike __Best Subset__ and __Forward Step-wise__ regression, which controls the complexit of a model by resttricting the number of variables, __Ridge Regression__ keeps all the variables in and shrinks the coefficients toward zero. 
