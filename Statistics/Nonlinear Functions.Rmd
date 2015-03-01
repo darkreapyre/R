@@ -1,0 +1,279 @@
+---
+title: "My Nonlinear Functions in R Notes"
+author: "Trenton Potgieter"
+date: "Saturday, February 28, 2015"
+output: html_document
+---
+
+# Polynomials
+## Polynomial Regression
+### Overview
+
+In this document we explore fitting Nonlinear models using various tools within __R__. We will be using the `ISLR` library of data-sets, specifically the `Wage` data-set. 
+
+```{r packages, echo = TRUE}
+#Load the required packages
+require(ISLR)
+attach(Wage) #Attach to search path
+require(splines) #for use later
+require(gam) #fot later use
+
+```
+
+### Fitting the Model
+
+The first thing we look at in Nonlinear Models is Polynomial Regression, by making use of polynomials and a single predictor `age` and it's response on `wage`.
+
+```{r fit1, echo = TRUE}
+#Fit a 4th degree polynomial on wage
+fit1 <- lm(wage~poly(age, 4), data = Wage)
+summary(fit1)
+
+```
+
+__NOTE:__ Typically building a __4th__ degree polynomial fit would involve creating a matrix with columns: __$x$__, __$x^2$__, __$x^3$__ and __$x^4$__ and then using a regressing function. __R__ allows us to do this all in one equation using the `poly()` function which generates a basis of __orthoganol polynomials__. 
+
+Since we are usually not interested in the individual coefficients of a polynomial, but rather in the function that it has produced, we view the plot.
+
+```{r plot1, echo = TRUE, fig.width = 7, fig.height = 6}
+#Get the range of the ages (min and max)
+agelims <- range(age)
+
+#Create the grid of min to max of age
+age.grid <- seq(from = agelims[1], to = agelims[2])
+
+#Predict fromt he fit and with named variablwes from the original fit `age.grid`
+#and sdtandard errors
+pred <- predict(fit1, newdata = list(age = age.grid), se = TRUE)
+
+#Make the standard error bands (+ or - 2) in a 2 column matrix
+se.bands <- cbind(pred$fit + 2 * pred$se, pred$fit - 2 * pred$se)
+
+#Plot
+plot(age, wage, col = "darkgrey")
+lines(age.grid, pred$fit, lwd = 2, col = "blue") #lwd is Line Width
+matlines(age.grid, se.bands, col = "blue", lty = 2) #lty is Line Type
+
+```
+
+There are other, more direct ways to fitting polynomials in __R__, with using the `poly()` function.
+
+```{r fit2, echo = TRUE}
+#fit without poly() and wrapping it in an identity function
+fit2 <- lm(wage~age+I(age^2)+I(age^3)+I(age^3)+I(age^4), data = Wage)
+summary(fit2)
+
+```
+
+__NOTE:__ The __P-Values__ are different from the first fit. This is because we are using a different basis for representing the polynomial. (If we change the basis, we get different coefficients and therefore we get different __P-Values__). This may be a cause for concern, BUT remember that at the end of that day we are focusing on the fitted polynomial and we note that this hasn't changed at all. See below:
+
+```{r plot2,  echo = TRUE}
+#Plot the differnce betwqeen the two models
+plot(fitted(fit1), fitted(fit2))
+
+```
+
+__A perfectly straight line beuase the fitted values are the same.__ (The fitted polynomial was the same but the representation was different).
+
+As previously mentioned, by using __orthogonal polynomials__ in this simple way, it turns out that we can separately test for each coefficient. So if we look the summary of the fit , we can see that the __linear__, __quadratic__ and __cubic__ terms are significant, but not the __quadratic__. 
+
+```{r}
+summary(fit1)
+```
+
+### Using ANOVA
+
+Even though __orthogonal polynomials__ are convenient and considered a between way of fitting polynomials, BUT it only works with linear regression (GLM) and if there is a single predictor. More generally, to test whether one degree of polynomial is better then another degree of polynomial, we use a more general __ANOVA__ function. The following examples demonstrates the use of the `anova()` function.
+
+```{r anova, echo = TRUE}
+#create a linear model with education as a predictor
+fita <- lm(wage~education, data = Wage)
+
+#create a linear model with education and age as predictor
+fitb <- lm(wage~education+age, data = Wage)
+
+#create a linear model with education and a polynomial of degree 2 in age
+fitc <- lm(wage~education+poly(age, 2), data = Wage)
+
+#create a linear model with education and a polynomial of degree 3 in age
+fitd <- lm(wage~education+poly(age, 3), data = Wage)
+
+############################################################################################
+# NOTE: The above is a nested sequence of models. They are nested in complexity. In other  #
+# words, the second model contans the first as a special case. likewise the third contains #
+# the second and the first as a special case etc. -> Nested Sequence                       #
+############################################################################################
+
+#call anoiva() to sort out which ones we need
+anova(fita, fitb, fitc, fitd)
+
+```
+
+The output tells us that certainly there is correlation between $Education$ and $Age$. $Age^2$ is needed as well, but not $Age^3$. So using __ANOVA__ like this to test nested sequences of models is the right way to go in general.
+
+## Plynomial Logistic Regression 
+### Overview  
+
+So the above sections have all been using squared error loss and fitting linear regressions. Now, we can, of course, use the same technology to fit other models, such as logistic regressions. In order to do this, we have to first create a binary response variable. From the very fist plot, there seems to be two distinct clusters, separated by what seems to be the $250,000 threshold. To create a binary response variable, we will refer to the observations above this threshold as __1__ and the observations under this threshold as __0__. 
+
+### Fit the model
+
+```{r fit3, echo = TRUE}
+#Model Fit with the conditional >250
+fit3 <- glm(I(wage > 250) ~ poly(age, 3), data = Wage, family = binomial)
+summary(fit3)
+
+#Predict
+pred <- predict(fit3, list(age = age.grid), se = TRUE)
+
+#Standard error bands
+se.bands <- pred$fit + cbind(fit = 0, lower = -2 * pred$se, uppper = 2 * pred$se)
+head(se.bands)
+
+```
+
+__NOTE:__ When calling the `predict()` function, the results are on the __logit__ scale. Since this is Logistic Regression, we are more interested in the predictions on the __proability__ scale, especially if we are fitting against a single variable. To transform the predictions we need to apply the inverse logit mapping:
+
+$$p=\frac{e^\eta}{1+e^\eta}.$$
+
+So we apply the transformation to both our fitted function as well as the upper and lower standard error bands to get them on the probability scale.
+
+```{r transform, echo = TRUE}
+#Apply the inverse logit formula
+prob.bands <- exp(se.bands)/(1 + exp(se.bands))
+
+#Plot
+matplot(age.grid, prob.bands, col = "blue", lwd = c(2, 1, 1), lty = c(1, 2, 2),
+        type = "l", ylim = c(0, .1))
+points(jitter(age), I(wage > 250)/10, pch = "|", cex = .5) #Shrink the range to fit on page
+
+```
+
+The above plot shows the estimate of the fitted probability with an estimated __95%__ confidence interval for the fitted probability. 
+
+# Splines
+## Cubic Splines
+### Overview
+
+__Splines__ are more flexible then __Polinomials__ and offer us a wider scope of possibilities. To start, we fit a linear model using `wage` as an outcome but in this case we fit a __cubic splaine__ with knots at __25__, __40__ and __60__. 
+
+### Fit the Model
+
+```{r spline, echo = TRUE}
+#Fit the linear model with bs() as a basis for cubic polynomials
+fit <- lm(wage~bs(age, knots = c(25, 40, 60)), data = Wage)
+
+#Plot
+plot(age, wage, col = "darkgrey")
+lines(age.grid, predict(fit, list(age = age.grid)), col = "darkgreen", lwd = 2)
+abline(v = c(25, 40, 60), lty = 2, col = "darkgreen")
+
+```
+
+__Remember__ that a __Spline__ is cubic polynomial in each of the regions but they are constrained to be continuous at the knots. And they are constrained to have fit and second degree derivatives, which makes them really smooth BUT are discontinuous in the third derivative. So the idea of splines is that they're more local than polynomials and they don't have quite the "wagging tails" of polynomials, and they're a nice way of fitting flexible functions. 
+
+## Smoothing Splines
+### Overview
+
+__Smoothing Splines__ do not require knot selection as they essentially have knots everywhere. They control how smooth a function is with a roughness penalty or smoothing parameter which can conveniently be specified via the effective degrees of freedom or `df`. 
+
+### Fit the Model
+
+```{r smooth.sline, echo = TRUE}
+#Fit a smooth spline model with 16 degrees of freedom
+smooth <- smooth.spline(age, wage, df = 16)
+
+#############################################################################################
+# NOTE: smooth.spline() doesn't use a formula language, we just tell it the predictor is    #
+# age and the response is wage.                                                             #
+#############################################################################################
+
+#Overlay the smooth spline on the exisitng plot
+plot(age, wage, col = "darkgrey")
+lines(age.grid, predict(fit, list(age = age.grid)), col = "darkgreen", lwd = 2)
+abline(v = c(25, 40, 60), lty = 2, col = "darkgreen")
+lines(smooth, col = "red", lwd = 2)
+
+```
+
+### Automatically Selecting the Smoothing Parameter
+
+Alternatively with `smooth.spline()`, we can use __Leave One Out__ Cross-validation to select the smoothing parameter automatically.
+
+```{r smooth.cv, echo = TRUE, warning = FALSE}
+#Fit a smooth spline model with LOO cross-validation
+smooth.cv <- smooth.spline(age, wage, cv = TRUE)
+
+#Overlay on the exisitng plot
+plot(age, wage, col = "darkgrey")
+lines(age.grid, predict(fit, list(age = age.grid)), col = "darkgreen", lwd = 2)
+abline(v = c(25, 40, 60), lty = 2, col = "darkgreen")
+lines(smooth, col = "red", lwd = 2)
+lines(smooth.cv, col = "purple", lwd = 2)
+
+```
+
+__Note__ from the plot that there is less effective degrees of freedom: __`r smooth.cv$df`__
+
+## General Additive Models
+### Overview
+
+We rarely want to fit a model with just one single predictor. We usually have more than one predictor, so we need a way of mixing these together as well producing nice plots. The `gam` package is going to help us do that.
+
+### Fitting the Model
+
+```{r gam1, echo = TRUE, fig.width = 10, fig.height = 5}
+#Fit the Generalized Additive model
+gam1 <- gam(wage~s(age, df = 4)+s(year, df = 4)+education, data = Wage)
+
+#####################################################################################
+# NOTE: the `s` specifies a smoothing spline with the number of degrees of freedom. #
+# Education is a factor variables, so it's in as a linear terms. It'll make dummy   #
+# variables for each of the levels, and fit constants.                              #
+#####################################################################################
+
+#Plot
+par(mfrow = c(1, 3))
+plot(gam1, se = TRUE)
+
+```
+
+The plot shows each of the terms in the `gam`, as well as the standard errors for each of those terms. We see that salaries tend to increase with year and there seems to be a dip around 2005, but then they continue to rise. Additionally, salary increases monotonically with education. So this is a very convenient way of fitting non-linear
+functions in several variables, and having nice ways of producing plots.
+
+`gam` also works for logistic regression, and other kinds of generalized linear models. As in the previous section, we'll use our binary variable for wage, we'll fit a smooth term in age and a smooth term in year.
+
+```{r gam2, echo = TRUE, fig.width = 10, fig.height = 5}
+#Fit the Generalized Additive model for Logistic Regression on the wage threshold >250K
+gam2 <- gam(I(wage > 250)~s(age, df = 4)+s(year, df = 4)+education, data = Wage, family = binomial)
+
+#Plot
+par(mfrow = c(1, 3))
+plot(gam2)
+
+```
+
+Using `gam` we can perform additional testing. So test see if we need a non-linear term for the __year__ variable?
+
+```{r gam2a, echo = TRUE, fig.width = 10, fig.height = 5}
+#Fit the Generalized Additive model but include a linear term instead of a smooth term
+gam2a <- gam(I(wage > 250)~s(age, df = 4)+year+education, data = Wage, family = binomial)
+
+#Perform ANOVA test on the two models
+anova(gam2a, gam2, test = "Chisq")
+
+```
+
+The __P-value__ is __0.82__, which says we really don't need this non-linear term for year. A linear term will be fine. So we can test further and see if we need a term at all for __year__.
+
+The `gam` package can also be used as a plotting method for `lm` and `glm`.
+
+```{r plot.gam, echo = TRUE, fig.width = 10, fig.height = 5}
+#Plotting with `gam` even though it s linear model
+par(mfrow = c(1, 3))
+
+#Linera model with `ns` as a natural spline. Similar to calls to `gam`
+lm1 <- lm(wage~ns(age, df = 4)+ns(year, df = 4)+education, data = Wage)
+plot.gam(lm1, se = TRUE)
+
+```
