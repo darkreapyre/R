@@ -1,5 +1,5 @@
 ---
-title: "My Tree-based in R Notes"
+title: "My Tree-based Methods in R Notes"
 output: html_document
 ---
 
