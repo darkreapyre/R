@@ -1,0 +1,177 @@
+---
+title: "My Tree-based in R Notes"
+output: html_document
+---
+
+# Decision Trees  
+
+## Overview  
+
+To see how Decision Trees fit into __R__, we will be using the `Carseats` data from the `ISLR` package. The `Carseats` data is a simulated data set containing sales of child car seats at 400 different store. To use this data with Trees, we will also be using the `tree` package. 
+
+```{r pre-req, echo = TRUE}
+#Load required packages
+require(ISLR)
+require(tree)
+attach(Carseats)
+
+#Look at the data
+hist(Sales)
+
+```
+
+The above plot shows a histogram of sales and we see sales is a quantitative variable. To start demonstrating the use of Trees, we require a binary response variable. So we split __Sales__ into binary variable which we will call `High`  with the threshold equal to or above __8__. 
+
+```{r High, echo = TRUE}
+#Create binary varible
+High <- ifelse(Sales <= 8, "No", "Yes")
+
+#Add the variable back into the data fram
+Carseats <- data.frame(Carseats, High)
+
+```
+
+## Fitting the Tree Model
+
+Now we fit a Tree to this data, summarize and plot it. __Note__ however that we have to exclude __Sales__ from the data as we have already created the binary response variable `High`,which was derived from the __Sales__ data.
+
+```{r tree, echo = TRUE, fig.width = 10, fig.height = 15}
+#Create a tree model
+tree.carseats <- tree(High~.-Sales, data = Carseats)
+summary(tree.carseats)
+
+#Plot the Tree
+plot(tree.carseats)
+
+#Annotate the Tree
+text(tree.carseats, pretty = 0)
+```
+
+Due to the fact that there are so many variables and so many splits in this tree, it's a complex tree to look at. So we don't really learn a huge amount from the tree. BUT what we do see is that each of the terminal nodes are labeled __yes__ or __no__. Each of the splitting variables is labeled at the place where the split took place and at which value of the variable that the split occurred. By the time to get to terminal node the the label is according to the majority of the yes's or no's.
+
+## Detailed Tree View  
+
+```{r print, echo = TRUE}
+#Treee print
+tree.carseats
+
+```
+
+The print out of the Tree basically gives us the details of every single terminal node. At the __root__, we can see how many observations there are and the mean deviance, as well as the proportions of yes's and no's. Then for every single splitting variable (or node) it is numbered. We can see how the numbering works by going down the tree. And  once again it gives us the proportions of yes's and no's at every node in the tree. This is handy, especially if we want to extract the details from the tree for other purposes.
+
+## Making Predictions  
+
+To make predictions we split our Tree data into a __Training__ and __Test__ set. Since there are __`r dim(Carseats)[1]`__ observations in the `Carseats` data set, we create the __Training__ set with __250__ observations and the the __Test__ set with __150__ observations. 
+
+```{r pred1, echo = TRUE, fig.width = 10, fig.height = 15}
+#Set the seed
+set.seed(1011)
+
+#Take a random sample of 250 observations for training, without replacement
+train <- sample(1:nrow(Carseats), 250)
+
+#Refit the model on training data
+tree.carseats <- tree(High~.-Sales, Carseats, subset = train)
+
+#Plot the Tree
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+
+#Make predictions on the Test set and predict "Class" labels
+tree.pred <- predict(tree.carseats, Carseats[-train, ], type = "class")
+
+#evaluate the error
+with(Carseats[-train, ], table(tree.pred, High))
+
+```
+
+__Remember__ that the diagonals are the correct classifications and the off diagonals are the incorrect classifications. So to record the correct predictions we take the sum of the two diagonals divided by the total, which is __`r dim(Carseats[-train, ])[1]`__ and therefore our error rate is __`r (with(Carseats[-train, ], table(tree.pred, High))[1] + with(Carseats[-train, ], table(tree.pred, High))[4])/dim(Carseats[-train,])[1]`__.
+
+## Pruning the Tree  
+
+We know that when we grow a "bushy" tree it can have too much variance, so we use cross-validation to prune the tree optimally, using `cv.tree()` and telling it that we want to use __missclassification error__ as the basis for the pruning. __Note:__ By default, `cv.tree()` uses 10-fold cross-validation.
+
+```{r cv.carseats, echo = TRUE}
+#Run cross-validation with prune.misclass
+cv.carseats <- cv.tree(tree.carseats, FUN = prune.misclass)
+cv.carseats
+
+#Plot
+plot(cv.carseats)
+
+```
+
+The plot above shows how the deviance drops and then seems to increase as well as the cost-complexity (top of the plot), we see this kind of "jumpy" trend  because  the miss-classification error is on 250 cross-validated points. We will pick the value (__13__) somewhere in the minimum, between __10__ and __15__ and prune the tree to a size of __13__.
+
+```{r prune, echo = TRUE, fig.width = 8, fig.height = 10}
+#Prune the tree on the full training data
+prune.carseats <- prune.misclass(tree.carseats, best = 13)
+
+#Plot the new tree
+plot(prune.carseats)
+text(prune.carseats, pretty = 0)
+
+```
+
+The plot shows that the tree is a little bit shallower than the previous trees as a result of cross-validation. Now we can evaluate the pruned tree on our test data.
+
+```{r pred2, echo = TRUE}
+#Evaluate again on the test data
+tree.pred2 <- predict(prune.carseats, Carseats[-train, ], type = "class")
+with(Carseats[-train, ], table(tree.pred2, High))
+
+```
+
+Our new error rate is: __`r (with(Carseats[-train, ], table(tree.pred2, High))[1] + with(Carseats[-train, ], table(tree.pred2, High))[4])/dim(Carseats[-train,])[1]`__. So it seems like the correct classifications dropped a little bit, but it's probably just one observation. So we didn't get too much from pruning the tree, except we got a shallower tree, which is easier to interpret.
+
+## Conclusion  
+
+Trees are very handy, especially if we get shallow trees as these are nice to interpret. It is often the case that trees don't give very good prediction errors so it's better to look at random forests and boost in, which tend to outperform trees as far as prediction and  misclassification errors are concerned.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
