@@ -1,6 +1,10 @@
 ---
 title: "My Tree-based Methods in R Notes"
-output: html_document
+output: 
+    html_document:
+        toc: true
+        theme: united
+        highlight: tango
 ---
 
 # Decision Trees  
@@ -127,6 +131,35 @@ Our new error rate is: __`r (with(Carseats[-train, ], table(tree.pred2, High))[1
 ## Conclusion  
 
 Trees are very handy, especially if we get shallow trees as these are nice to interpret. It is often the case that trees don't give very good prediction errors so it's better to look at random forests and boost in, which tend to outperform trees as far as prediction and  misclassification errors are concerned.
+
+
+# Random Forests and Boosting  
+
+## Overview
+
+These methods use Trees as building blocks to build more cmplexs models. To explore these methods, we will use the Boston Housinf data from the `MASS` package. This data gives us housing values and other statustocs in each of the 506 suburbs of Boston based on the 1970 census. We will also be using the `gbm` (for Boosting) and `randonForest` packages.
+
+## Random Forests
+
+```{r RF, echo = TRUE}
+require(gbm)
+require(randomForests)
+require(MASS)
+
+```
+
+Random Forests build lots of "bushy" tress and then average them to reduce the variance. Using the `Boston` data, there are __`r dim(Boston)[1]`__ Suburbs. For aach suburb we've every got demographics, and things like crime per capita, types of industry, average number of rooms per dwelling, average proportion of the age of the houses, and various other things. To see how Random Forests work, we will create a __Training__ set by taking a sample of __300__ observations and fitting a model with `medv` (Median value of owner occupied homes in $1000 for each Suburb) as the response variable.
+
+```{r rf.fit, echo = TRUE}
+#Set the Seed
+set.seed(101)
+
+#Create the Training Set
+train <- sample(1:nrown(Boston), 300)
+
+
+```
+
 
 
 
