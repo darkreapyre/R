@@ -1,0 +1,272 @@
+---
+title: "My Tree-based Methods in R Notes"
+output: 
+    html_document:
+        toc: true
+        theme: united
+        highlight: tango
+---
+
+# Decision Trees  
+
+## Overview  
+
+To see how Decision Trees fit into __R__, we will be using the `Carseats` data from the `ISLR` package. The `Carseats` data is a simulated data set containing sales of child car seats at 400 different store. To use this data with Trees, we will also be using the `tree` package. 
+
+```{r pre-req, echo = TRUE}
+#Load required packages
+require(ISLR)
+require(tree)
+attach(Carseats)
+
+#Look at the data
+hist(Sales)
+
+```
+
+The above plot shows a histogram of sales and we see sales is a quantitative variable. To start demonstrating the use of Trees, we require a binary response variable. So we split __Sales__ into binary variable which we will call `High`  with the threshold equal to or above __8__. 
+
+```{r High, echo = TRUE}
+#Create binary varible
+High <- ifelse(Sales <= 8, "No", "Yes")
+
+#Add the variable back into the data fram
+Carseats <- data.frame(Carseats, High)
+
+```
+
+## Fitting the Tree Model
+
+Now we fit a Tree to this data, summarize and plot it. __Note__ however that we have to exclude __Sales__ from the data as we have already created the binary response variable `High`,which was derived from the __Sales__ data.
+
+```{r tree, echo = TRUE, fig.width = 10, fig.height = 15}
+#Create a tree model
+tree.carseats <- tree(High~.-Sales, data = Carseats)
+summary(tree.carseats)
+
+#Plot the Tree
+plot(tree.carseats)
+
+#Annotate the Tree
+text(tree.carseats, pretty = 0)
+```
+
+Due to the fact that there are so many variables and so many splits in this tree, it's a complex tree to look at. So we don't really learn a huge amount from the tree. BUT what we do see is that each of the terminal nodes are labeled __yes__ or __no__. Each of the splitting variables is labeled at the place where the split took place and at which value of the variable that the split occurred. By the time to get to terminal node the the label is according to the majority of the yes's or no's.
+
+## Detailed Tree View  
+
+```{r print, echo = TRUE}
+#Treee print
+tree.carseats
+
+```
+
+The print out of the Tree basically gives us the details of every single terminal node. At the __root__, we can see how many observations there are and the mean deviance, as well as the proportions of yes's and no's. Then for every single splitting variable (or node) it is numbered. We can see how the numbering works by going down the tree. And  once again it gives us the proportions of yes's and no's at every node in the tree. This is handy, especially if we want to extract the details from the tree for other purposes.
+
+## Making Predictions  
+
+To make predictions we split our Tree data into a __Training__ and __Test__ set. Since there are __`r dim(Carseats)[1]`__ observations in the `Carseats` data set, we create the __Training__ set with __250__ observations and the the __Test__ set with __150__ observations. 
+
+```{r pred1, echo = TRUE, fig.width = 10, fig.height = 15}
+#Set the seed
+set.seed(1011)
+
+#Take a random sample of 250 observations for training, without replacement
+train <- sample(1:nrow(Carseats), 250)
+
+#Refit the model on training data
+tree.carseats <- tree(High~.-Sales, Carseats, subset = train)
+
+#Plot the Tree
+plot(tree.carseats)
+text(tree.carseats, pretty = 0)
+
+#Make predictions on the Test set and predict "Class" labels
+tree.pred <- predict(tree.carseats, Carseats[-train, ], type = "class")
+
+#evaluate the error
+with(Carseats[-train, ], table(tree.pred, High))
+
+```
+
+__Remember__ that the diagonals are the correct classifications and the off diagonals are the incorrect classifications. So to record the correct predictions we take the sum of the two diagonals divided by the total, which is __`r dim(Carseats[-train, ])[1]`__ and therefore our error rate is __`r (with(Carseats[-train, ], table(tree.pred, High))[1] + with(Carseats[-train, ], table(tree.pred, High))[4])/dim(Carseats[-train,])[1]`__.
+
+## Pruning the Tree  
+
+We know that when we grow a "bushy" tree it can have too much variance, so we use cross-validation to prune the tree optimally, using `cv.tree()` and telling it that we want to use __missclassification error__ as the basis for the pruning. __Note:__ By default, `cv.tree()` uses 10-fold cross-validation.
+
+```{r cv.carseats, echo = TRUE}
+#Run cross-validation with prune.misclass
+cv.carseats <- cv.tree(tree.carseats, FUN = prune.misclass)
+cv.carseats
+
+#Plot
+plot(cv.carseats)
+
+```
+
+The plot above shows how the deviance drops and then seems to increase as well as the cost-complexity (top of the plot), we see this kind of "jumpy" trend  because  the miss-classification error is on 250 cross-validated points. We will pick the value (__13__) somewhere in the minimum, between __10__ and __15__ and prune the tree to a size of __13__.
+
+```{r prune, echo = TRUE, fig.width = 8, fig.height = 10}
+#Prune the tree on the full training data
+prune.carseats <- prune.misclass(tree.carseats, best = 13)
+
+#Plot the new tree
+plot(prune.carseats)
+text(prune.carseats, pretty = 0)
+
+```
+
+The plot shows that the tree is a little bit shallower than the previous trees as a result of cross-validation. Now we can evaluate the pruned tree on our test data.
+
+```{r pred2, echo = TRUE}
+#Evaluate again on the test data
+tree.pred2 <- predict(prune.carseats, Carseats[-train, ], type = "class")
+with(Carseats[-train, ], table(tree.pred2, High))
+
+```
+
+Our new error rate is: __`r (with(Carseats[-train, ], table(tree.pred2, High))[1] + with(Carseats[-train, ], table(tree.pred2, High))[4])/dim(Carseats[-train,])[1]`__. So it seems like the correct classifications dropped a little bit, but it's probably just one observation. So we didn't get too much from pruning the tree, except we got a shallower tree, which is easier to interpret.
+
+## Conclusion  
+
+Trees are very handy, especially if we get shallow trees as these are nice to interpret. It is often the case that trees don't give very good prediction errors so it's better to look at random forests and boost in, which tend to outperform trees as far as prediction and  misclassification errors are concerned.
+
+
+# Random Forests and Boosting  
+
+## Overview
+
+These methods use Trees as building blocks to build more complex models. To explore these methods, we will use the Boston Housing data from the `MASS` package. This data gives us housing values and other status information in each of the 506 suburbs of Boston based on the 1970 census. We will also be using the `gbm` (for Boosting) and `randonForest` packages.
+
+## Random Forests
+
+```{r RF, echo = TRUE}
+require(randomForest)
+require(MASS)
+
+```
+
+Random Forests build lots of "bushy" tress and then average them to reduce the variance. Using the `Boston` data, there are __`r dim(Boston)[1]`__ Suburbs. For each suburb we've every got demographics, things like crime per capita, types of industry, average number of rooms per dwelling, average proportion of the age of the houses, and various other things. To see how Random Forests work, we will create a __Training__ set by taking a sample of __300__ observations and fitting a model with `medv` (Median value of owner occupied homes in $1000 for each Suburb) as the response variable.
+
+```{r rf.fit, echo = TRUE}
+#Set the Seed
+set.seed(101)
+
+#Create the Training Set
+train <- sample(1:nrow(Boston), 300)
+
+#Create the Random Forest fit
+rf.boston <- randomForest(medv~., data = Boston, subset = train)
+
+#View the model
+rf.boston
+
+```
+
+From the output we can see that 500 "bushy" trees were grown, with the __Mean Squared Residual__ and the percentage __Variance Explaned__. Also note that these are the __out-of-bag__ errors, a very clever device in Random Forests to get honest estimates. So each observation was predicted using the average of trees that didn't include it and are sort of the de-biased estimates of prediction error. The only tuning parameter in a Random Forest is the variable called `mtry`. This argument is the number of variables that are selected at each split of each tree when you come to make a split. The model reports that `mtry = 4`, which is __4__ out of the __`r dim(Boston)[2]-1`__ variables are selected at random, each time we come to split a node and then the split would be confined to one of those __4__ variables. This is how Random Forests de-correlates the trees.
+
+So since $p=13$ here, we are going to fit a series of Random Forests of the range __1__ to __13__ to try all possible values of `mtry`. We will then record the errors and make a plot.
+
+```{r err, echo = TRUE}
+#Set up two double precision vectors  to record the errors
+oob.err <- double(13)
+test.err <- double(13)
+
+#Create a loop of 1:13
+for(mtry in 1:13){
+    fit <- randomForest(medv~., data = Boston, subset = train, mtry = mtry,
+                        ntree = 400) #restrict no. trees to 400
+    oob.err[mtry] <- fit$mse[400] #extract out-of-bag error
+    
+    #Predict on the Test set
+    pred <- predict(fit, Boston[-train, ])
+    
+    #Compute the mean squred error for the test data
+    test.err[mtry] <- with(Boston[-train, ], mean((medv - pred)^2))
+    
+    #Print out the value of mtry as it goes
+    #cat(mtry, " ")
+}
+
+#Plot the Data using matplot because there are two colums
+matplot(1:mtry, cbind(test.err, oob.err), pch = 19,
+        col = c("red", "blue"), type = "b", ylab = "Mean Squared Error")
+legend("topright", legend = c("Out-of-bag Error", "Test Error"),
+       pch = 19, col = c("red", "blue"))
+
+```
+
+Now ideally, the two curves should line up. BUT it seems like the test error is a bit lower. But be warned, there's a lot of variability in the test error estimates. So since the __out-of-bag error__ was computed on one data set and the __test error__ on a different data set, and they weren't very large, these differences are well within the standard errors. Also we should take care not be fooled by the fact that the curve is smoothly above the blue curve. 
+These error estimates are very correlated, because the Random Forest with `mtry = 4` is very similar to the one with `mtry = 5`. That is why these curves, or each of the curves are quite smooth. What is evident from the plot however, is that the `mtry = 4` seems to be the best value at least for the __test error__ and `mtry = 8` for the __out-of-bag error__. 
+
+__NOTE:__ On the left-hand side of the plot  is the performance of a single "bushy" tree. But that's the performance of a single bushy tree with the __Mean Squared Error__ of __26__ and we drop down to just over __14__, just above half, so it reduced the error by half. On the right-hand side we use all __13__ variables, so this is corresponds to __bagging__. 
+
+## Boosting
+
+Random Forests reduce the variance of the trees by averaging. So it grows big bushy trees, and then gets rid of the
+variance by averaging. Boosting, on the other hand, focuses on bias. Boosting grows smaller, "stubbier" trees, with each new tree trying to patch up the deficiencies (bias) of the current ensemble. Using the same data set we do boosting in __R__ using the `gbm` (Gradient Boosted Machines) package.
+
+```{r GBM, echo = TRUE}
+require(gbm)
+
+#Fit the model
+#The distribution is "gaussian" becasue we a doing squared error loss
+#We ask gbm for 10000 "shallow" trees since we stop after 4 slits
+boost.boston <- gbm(medv~., data = Boston[train, ], distribution = "gaussian",
+                 n.trees = 10000, shrinkage = 0.01, interaction.depth = 4)
+
+#Show the variable importance plot
+summary(boost.boston)
+
+```
+
+From the __Variable Importance__ plot above, we can see that there are two variables that seem to be the most important, `rm` (No. of rooms) and `lstat` (Percentage of Lower Economic Status). 
+
+```{r plots, echo = TRUE}
+#Plot the partial dependecc of the two important variables
+plot(boost.boston, i = "lstat")
+plot(boost.boston, i = "rm")
+
+```
+
+The partial dependence plots above shows us the relationship of the the variables. Even though there is a "rough" relationship, we can see that the higher the proportion of lower status individuals in the suburb, the lower the value of the house. There is a reversed relationship with the number of rooms. As the average number of rooms in the house increases, the price increases.
+
+Next, we predict our boosted model on the test data set. Normally, one would use cross-validation in boosting to select the number of trees. Additionally the other parameters like the shrinkage parameter (a tuning parameter), one would probably use cross-validation to select that as well. But for the sake of this test we won't do that here. Instead what we'll do here is just look at the test performance as a function of the number of trees. To do that, we'll make a grid of number of trees in steps of __100__ from __100__ to __10,000__. We then run the `predict` function on the boosted model to produce a matrix of predictions on the test data.
+
+```{r predmat, echo = TRUE}
+#Sequance from 100 to 10000
+n.trees <- seq(from = 100, to = 10000, by = 100)
+
+#Create a matrix of prediction
+predmat <- predict(boost.boston, newdata = Boston[-train, ], n.trees = n.trees)
+
+#Compute the test error on each prediction
+
+#############################################################################
+# Note: predmat is a matrix and medv is a vector, so using `apply` simply   #
+# recycles the vector                                                       #
+#############################################################################
+
+p.err <- with(Boston[-train, ], apply((predmat - medv)^2, 2, mean))
+
+```
+
+So what we get is a matrix of predictions on the test data with __`r dim(predmat)[1]`__ test observations and __`r dim(predmat)[2]`__ different predict vectors at those 100 different values of tree. We compute the test error for each of those and then we apply to the columns of these square differences, the mean, to get a column-wise mean squared error.
+
+```{r plot, echo = TRUE}
+#Plot the result
+plot(n.trees, p.err, pch = 19, ylab = "Mean Squared Error", xlab = "No. Trees",
+     main = "Boosting Test Error")
+
+#OVerlay the minumm from the Random Forest result
+abline(h = min(test.err), col = "red")
+
+```
+
+As can be seen, the boosting error plot drops down lower, than the Random Forest. This is because the plot is as a function of the number of trees. The plot also shows the __Mean Squared Error__ leveling off and this is evidence of the claim that boosting is reluctant to over fit the data. This can bee seen when we overlay the best test error from the Random Forest plot. Boosting actually got a reasonable amount below the test error for the Random Forest
+
+## Conclusion
+
+Random Forests and Boosting are two very powerful methods. The experience is that Boosting (especially if you're
+willing to go through the tweaking and the tuning) will usually outperform Random Forests. But Random Forests are really easy, they won't over fit (by being increasing the number of trees in Random Forest, it won't over fit) and the only tuning parameter is the `mtry`. With boosting it's not the case. You've got genuine tuning parameters, the number of trees, the shrinkage parameter, and the depth.
