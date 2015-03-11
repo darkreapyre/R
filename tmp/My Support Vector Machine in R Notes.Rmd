@@ -44,10 +44,10 @@ __NOTE:__ We include a `cost` parameter, which is a tuning parameter.
 require(e1071)
 
 #Create a data from from the matrix and make `y` a factor variable
-dat <- data.frame(x, y = as.factor(y))
+df <- data.frame(x, y = as.factor(y))
 
 #Fit the model with a liner classifier and no variable standardization
-svmfit <- svm(y~., data = dat, kernel = "linear", cost = 10, sclae = FALSE)
+svmfit <- svm(y~., data = df, kernel = "linear", cost = 10, scale = FALSE)
 
 #Summary
 print(svmfit)
@@ -58,7 +58,7 @@ The summary shows that the number of __Support Vectors__ is __`r svmfit$tot.nSV`
 
 ```{r plot.svmfit, echo = TRUE}
 #Plot the model
-plot(svmfit, dat)
+plot(svmfit, df)
 
 ```
 
@@ -111,14 +111,8 @@ From this equation we have to determine a __slope__ and an __intercept__ for the
 
 ```{r coefficients, echo = TRUE}
 #Create beta and beta0 from "Chapter 12"
-
-#######################################################
-# NOTE: The drop() function deletes the dimensions of #
-# an array which only have one level.                 #
-#######################################################
-
-b <- drop(t(svmfit$coefs)%*%x[svmfit$index,])
-b0 <- svmfit$rho
+beta <- drop(t(svmfit$coefs)%*%x[svmfit$index,])
+beta0 <- svmfit$rho
 
 #Recreate the lattice plot
 plot(xgrid, col =c("red", "blue")[as.numeric(ygrid)],
@@ -127,42 +121,19 @@ points(x, col = y+3, pch = 19)
 points(x[svmfit$index, ], pch = 5, cex = 2)
 
 #Use the coefficients to draw decision boundary slope
-abline(b0/b[2], -b[1]/b[2])
+abline(beta0/beta[2], -beta[1]/beta[2])
 
 #Add the upper margin
-abline((b0 - 1)/b[2], -b[1]/b[2], lty = 2)
+abline((beta0 - 1)/beta[2], -beta[1]/beta[2], lty = 2)
 
 #Add the lower margin
-abline((b0 + 1)/b[2], -b[1]/b[2], lty = 2)
+abline((beta0 + 1)/beta[2], -beta[1]/beta[2], lty = 2)
 
 ```
-
-__NOTE:__ The plot above does not fit the decision boundary correctly.
 
 ## Non-linear SVM Classifier
 
 In this section we run the SVM on some data where a non-linear boundary is called for. To this end we take an example from the __Elements of Statistical Learning__. We will use a kernel support vector machine to learn the boundary.
-
-```{r load, echo = TRUE}
-#Load the URL. Training data is "x" and "y"
-URL <- "http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/ESL.mixture.rda"
-load(url(URL))
-#load(url("http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/ESL.mixture.rda"))
-
-#Remove the "x" and "y" from the previous section
-#rm(x, y)
-#attach(ESL.mixture)
-
-```
-
-
-
-
-
-
-
-
-
 
 
 
