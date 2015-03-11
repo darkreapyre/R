@@ -1,0 +1,188 @@
+---
+title: "My Support Vector Machine in R Notes"
+output: 
+    html_document:
+        toc: true
+        theme: united
+        highlight: tango
+---
+
+# Support Vector Machines
+
+To demonstrate the Support Vector Machines, it is easiest to work inlow dimensions to properly vizualize the data.  
+
+__NOTE:__ In the following examples, we will not be using cross-validation to select the cost parameters etc.
+
+## Linear SVM Classifier 
+
+To show the __Linear SVM Classifier__ we will generate some data in two dimensions and make them a little separated. The followig plot shows this:
+
+```{r plot, echo = TRUE}
+#Set the seed
+set.seed(10111)
+
+#Create a matrix of 20 observations in two classes, normally distributed
+x <- matrix(rnorm(40), 20, 2)
+
+#Create the response variable -1 or +1 (10 in each class)
+y <- rep(c(-1, 1), c(10, 10))
+
+#Change the mean from 0 to 1 for any y = +1
+x[y == 1, ] = x[y == 1, ] + 1
+
+#Plot
+plot(x, col = y + 3, pch = 19)
+
+```
+
+Now that we have the two dimensional data, the `svm()` function that we use is found in the `e1071` package. After loading the package, we turn `y` into a factor variable and compute the fit.  
+
+__NOTE:__ We include a `cost` parameter, which is a tuning parameter.
+
+```{r svmfit, echo = TRUE}
+#Load the required packages
+require(e1071)
+
+#Create a data from from the matrix and make `y` a factor variable
+dat <- data.frame(x, y = as.factor(y))
+
+#Fit the model with a liner classifier and no variable standardization
+svmfit <- svm(y~., data = dat, kernel = "linear", cost = 10, sclae = FALSE)
+
+#Summary
+print(svmfit)
+
+```
+
+The summary shows that the number of __Support Vectors__ is __`r svmfit$tot.nSV`__. Remember, __Support Vectors__ are the ponts that are close to the decision boundary or on the wrong side of the boundary.
+
+```{r plot.svmfit, echo = TRUE}
+#Plot the model
+plot(svmfit, dat)
+
+```
+
+The plot abpve shows the generic plotting function for the support vector machines. As can be seen, it's not a particularly nice plot function as it shows the decision boundary as jagged. Additionally, there's not much control over the colors and it breaks with convention since it puts __X2__ on the horizontal axis and __X1__ on the vertical axis (unlike what __R__ would automatically do for a matrix). Therefore, we will make our own plot.
+
+To do this, the first thing we do is make a grid of values (or lattice) for __X1__ and __X2__ using a function to reuse later. The funciton makes use of `expand.grid()` and produces the coordiantes of `n * n` points onthe lattice covering the domain of `x`. Having made the latticve, we make a prediction at each point on the lattice and then plot the lattice, color-coded according to the classification so that we can actually see the decision boundary. The support points( points on the margin or on the wrong side of the margin) are indexed in the `$index` component of the fit.
+
+```{r lattice, echo = TRUE, fig.height = 5, fig.width = 5}
+#make.grid function with inputs, x as the data matrix and no. points in each
+#direction, 75 in this case (75 x 75 grid)
+make.grid <- function(x, n = 75){
+    #Use apply() to get the range of each of the variables in `x`
+    grange <- apply(x, 2, range)
+    #For each (x1 and x2), use seq() to get the lowest to upper value and
+    #construct the grid of length n
+    x1 <- seq(from = grange[1, 1], to = grange[2, 1], length = n)
+    x2 <- seq(from = grange[1, 2], to = grange[2, 2], length = n)
+    #use epand.grid() to contruct the matrix
+    expand.grid(X1 = x1, X2 = x2)
+}
+
+#apply the function
+xgrid <- make.grid(x)
+
+#predict from from the svmfit at the values from xgrid
+ygrid <- predict(svmfit, xgrid)
+
+#make the plot
+#plot all the points in xgrid and color them according to the prediction
+plot(xgrid, col = c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .2)
+
+#overlay the origional points
+points(x, col = y+3, pch = 19)
+
+#show the support points from `$index`
+points(x[svmfit$index, ], pch = 5, cex = 2)
+
+```
+
+From the plot above, the decision boundary is now clearly visible. Each of the points is one of the points on the lattice and they have been color-coded as to where they classify. The origional points have been overlayed adn using `$index`, we can see which of them are our __support points__ (points that were instrumental in determining the decision boundary). 
+
+The `svm` function is not too friendly in that we have to do some woth to get back the linear coefficients that one would use to describe the linear function. These coefficients can be derived from the objects on the fit, but that needs to be done manually. (Probably the reason is that this only makes sense for linear kernels and the function is more general). 
+
+Chapter 12 of __Elements of Statistical Learning__ shows a formula to use to extract the linear coefficients that describe the linear boundary, using the following equation:
+
+$$\beta_0+\beta_1x_1+\beta_2x_2=0$$
+
+From this equation we have to determine a __slope__ and an __intercept__ for the decision boundary.
+
+```{r coefficients, echo = TRUE}
+#Create beta and beta0 from "Chapter 12"
+
+#######################################################
+# NOTE: The drop() function deletes the dimensions of #
+# an array which only have one level.                 #
+#######################################################
+
+b <- drop(t(svmfit$coefs)%*%x[svmfit$index,])
+b0 <- svmfit$rho
+
+#Recreate the lattice plot
+plot(xgrid, col =c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .2)
+points(x, col = y+3, pch = 19)
+points(x[svmfit$index, ], pch = 5, cex = 2)
+
+#Use the coefficients to draw decision boundary slope
+abline(b0/b[2], -b[1]/b[2])
+
+#Add the upper margin
+abline((b0 - 1)/b[2], -b[1]/b[2], lty = 2)
+
+#Add the lower margin
+abline((b0 + 1)/b[2], -b[1]/b[2], lty = 2)
+
+```
+
+__NOTE:__ The plot above does not fit the decision boundary correctly.
+
+## Non-linear SVM Classifier
+
+In this section we run the SVM on some data where a non-linear boundary is called for. To this end we take an example from the __Elements of Statistical Learning__. We will use a kernel support vector machine to learn the boundary.
+
+```{r load, echo = TRUE}
+#Load the URL. Training data is "x" and "y"
+URL <- "http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/ESL.mixture.rda"
+load(url(URL))
+#load(url("http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/ESL.mixture.rda"))
+
+#Remove the "x" and "y" from the previous section
+#rm(x, y)
+#attach(ESL.mixture)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
