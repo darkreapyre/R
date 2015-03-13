@@ -1,9 +1,14 @@
 ---
 title: "My Nonlinear Functions in R Notes"
-author: "Trenton Potgieter"
-date: "Saturday, February 28, 2015"
-output: html_document
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
 ---
+
+\pagebreak
 
 # Polynomials
 ## Polynomial Regression
@@ -179,7 +184,7 @@ __Smoothing Splines__ do not require knot selection as they essentially have kno
 
 ### Fit the Model
 
-```{r smooth.sline, echo = TRUE}
+```{r smoothsline, echo = TRUE}
 #Fit a smooth spline model with 16 degrees of freedom
 smooth <- smooth.spline(age, wage, df = 16)
 
@@ -200,7 +205,7 @@ lines(smooth, col = "red", lwd = 2)
 
 Alternatively with `smooth.spline()`, we can use __Leave One Out__ Cross-validation to select the smoothing parameter automatically.
 
-```{r smooth.cv, echo = TRUE, warning = FALSE}
+```{r smoothcv, echo = TRUE, warning = FALSE}
 #Fit a smooth spline model with LOO cross-validation
 smooth.cv <- smooth.spline(age, wage, cv = TRUE)
 
@@ -268,7 +273,7 @@ The __P-value__ is __0.82__, which says we really don't need this non-linear ter
 
 The `gam` package can also be used as a plotting method for `lm` and `glm`.
 
-```{r plot.gam, echo = TRUE, fig.width = 10, fig.height = 5}
+```{r plotgam, echo = TRUE, fig.width = 10, fig.height = 5}
 #Plotting with `gam` even though it s linear model
 par(mfrow = c(1, 3))
 

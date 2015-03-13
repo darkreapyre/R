@@ -1,14 +1,16 @@
 ---
 title: "My Tree-based Methods in R Notes"
 output: 
-    html_document:
+    pdf_document:
         toc: true
-        theme: united
-        highlight: tango
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
 ---
 
-# Decision Trees  
+\pagebreak
 
+# Decision Trees  
 ## Overview  
 
 To see how Decision Trees fit into __R__, we will be using the `Carseats` data from the `ISLR` package. The `Carseats` data is a simulated data set containing sales of child car seats at 400 different store. To use this data with Trees, we will also be using the `tree` package. 
@@ -95,7 +97,7 @@ __Remember__ that the diagonals are the correct classifications and the off diag
 
 We know that when we grow a "bushy" tree it can have too much variance, so we use cross-validation to prune the tree optimally, using `cv.tree()` and telling it that we want to use __missclassification error__ as the basis for the pruning. __Note:__ By default, `cv.tree()` uses 10-fold cross-validation.
 
-```{r cv.carseats, echo = TRUE}
+```{r cvcarseats, echo = TRUE}
 #Run cross-validation with prune.misclass
 cv.carseats <- cv.tree(tree.carseats, FUN = prune.misclass)
 cv.carseats
@@ -132,9 +134,9 @@ Our new error rate is: __`r (with(Carseats[-train, ], table(tree.pred2, High))[1
 
 Trees are very handy, especially if we get shallow trees as these are nice to interpret. It is often the case that trees don't give very good prediction errors so it's better to look at random forests and boost in, which tend to outperform trees as far as prediction and  misclassification errors are concerned.
 
+\pagebreak
 
 # Random Forests and Boosting  
-
 ## Overview
 
 These methods use Trees as building blocks to build more complex models. To explore these methods, we will use the Boston Housing data from the `MASS` package. This data gives us housing values and other status information in each of the 506 suburbs of Boston based on the 1970 census. We will also be using the `gbm` (for Boosting) and `randonForest` packages.
@@ -149,7 +151,7 @@ require(MASS)
 
 Random Forests build lots of "bushy" tress and then average them to reduce the variance. Using the `Boston` data, there are __`r dim(Boston)[1]`__ Suburbs. For each suburb we've every got demographics, things like crime per capita, types of industry, average number of rooms per dwelling, average proportion of the age of the houses, and various other things. To see how Random Forests work, we will create a __Training__ set by taking a sample of __300__ observations and fitting a model with `medv` (Median value of owner occupied homes in $1000 for each Suburb) as the response variable.
 
-```{r rf.fit, echo = TRUE}
+```{r rffit, echo = TRUE}
 #Set the Seed
 set.seed(101)
 

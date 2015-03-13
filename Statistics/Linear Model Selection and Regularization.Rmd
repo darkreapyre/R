@@ -1,9 +1,14 @@
 ---
 title: "My Model Selection and Regularization in R Notes"
-author: "Trenton Potgieter"
-date: "Saturday, February 21, 2015"
-output: html_document
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
 ---
+
+\pagebreak
 
 ## Overview
 
@@ -52,7 +57,7 @@ summary(regfit)
 
 __Note__ that by default it gives the best-subsets up to size __8__. Since we have __19__ variables we execute the test with all variables.
 
-```{r regfit.full, echo = TRUE}
+```{r regfitfull, echo = TRUE}
 #execute the best subset regression with Salary as the response and all 19 variables
 regfit.full <- regsubsets(Salary~., data = Hitters, nvmax = 19)
 
@@ -71,7 +76,7 @@ __Note__ that the idea is to pick a model with the lowest __CP__ and as can be s
 Index of the smallest element of the CP component: __`r which.min(fit.summary$cp)`__
 
 
-```{r point.plot, echo = TRUE}
+```{r pointplot, echo = TRUE}
 #Redo the plot
 plot(fit.summary$cp, xlab = "No. of Variables",
      ylab = "Estimate of Prediction Error (CP)")
@@ -82,7 +87,7 @@ points(10, fit.summary$cp[10], pch = 20, col = "red")
 
 __Note__ that the `regsubsets()` function has it's own, built-in plotting method. 
 
-```{r regfit.plot, echo = TRUE}
+```{r regfitplot, echo = TRUE, fig.height = 8, fig.width = 7}
 #Plot using the regsubsets() plotting method
 plot(regfit.full, scale = "Cp")
 
@@ -109,7 +114,7 @@ Best Subset Regression is quite aggressive in that it looks at ALL possible subs
 
 Here we continue to use the `regsubsets()` function, but we specify the `method = forward` option.
 
-```{r regfit.fwd, echo = TRUE}
+```{r regfitfwd, echo = TRUE}
 #execute regsubsets() with forward option
 regfit.fwd <- regsubsets(Salary~., data = Hitters, nvmax = 19, method = "forward")
 summary(regfit.fwd)
@@ -120,7 +125,7 @@ __Note__ how the models that are selected are exactly nested. So each new model 
 
 ## Plotting the "CP Statistic"
 
-```{r fwd.plot, echo = TRUE}
+```{r fwdplot, echo = TRUE, fig.width = 7, fig.height = 8}
 #plot the fit
 plot(regfit.fwd, scale = "Cp")
 
@@ -155,7 +160,7 @@ regfit.fwd <- regsubsets(Salary~., data = Hitters[train, ],
 
 Now we make predictions on the observations on the __Test__ set. Since we already know that there are __19__ subset models, we set up vectors to record the errors since there is no "predict" method available for `regsubsets()`.
 
-```{r manual.predict, echo = TRUE}
+```{r manualpredict, echo = TRUE}
 #create the vector to record errors
 errors <- rep(NA, 19)
 
@@ -220,7 +225,7 @@ Cross-validation is one of the preferred methods for doing model selection. In t
 
 ## Model Fit and Predictions
 
-```{r 10.fold, echo = TRUE}
+```{r 10-fold, echo = TRUE}
 #Set the seed
 set.seed(11)
 
@@ -298,7 +303,7 @@ The fist model we will fit it the __Ridge Regression Model__. This is achieved b
 
 __Note:__ For alpha's between __0__ and __1__ you get elastic net models, in-between __Ridge__ and __Lasso__.
 
-```{r fit.ridge, echo = TRUE}
+```{r fitridge, echo = TRUE}
 #Fit the Ridge Model
 fit.ridge <- glmnet(x, y, alpha = 0)
 
@@ -321,7 +326,7 @@ Unlike __Best Subset__ and __Forward Step-wise__ regression, which controls the 
 
 So `glmnet` gives the whole path and we need to pick a value along that path. To do this, `glmnet` has a built-in function called `cv.glmnet()` which does k-fold cross-validation.
 
-```{r cv.ridge, echo = TRUE}
+```{r cvridge, echo = TRUE}
 #10-fold cross-validation (default)
 cv.ridge <- cv.glmnet(x, y, alpha = 0)
 
@@ -340,7 +345,7 @@ ${minimize}\hspace{2 pt}RSS+\lambda\sum\limits_{j=1}^P\left|\beta_{j}\right|$
 
 By penalizing the absolute value of the coefficients, some of the coefficients are exactly zero.
 
-```{r fit.lasso, echo = TRUE}
+```{r fitlasso, echo = TRUE}
 #Fit the Lasso Model
 fit.lasso <- glmnet(x, y)
 
@@ -353,7 +358,7 @@ As we can see from the plot, once again `glmnet` fits the whole path and initial
 
 ## Cross-Validation of Lasso Regression
 
-```{r cv.lasso, echo = TRUE}
+```{r cvlasso, echo = TRUE}
 #10-fold cross-validation (default)
 cv.lasso <- cv.glmnet(x, y)
 
@@ -366,7 +371,7 @@ The cross-validation of __Lasso__ above is telling us that the best model (the m
 
 __NOTE:__ If we extract the coefficients from cross-validation object, we can see the  vector of coefficients corresponding to the best model.
 
-```{r cv.coefs, echo = TRUE}
+```{r cvcoefs, echo = TRUE}
 #Extract the coeficients
 coef(cv.lasso)
 
@@ -378,7 +383,7 @@ There are __5__ non-zero coefficients. SO by looking at the top row of the Cross
 
 For this exercise we will use the __Training__ and __Validation__ sets created earlier to select the `lambda` for the __Lasso__ model. 
 
-```{r lasso.train, echo = TRUE}
+```{r lassotrain, echo = TRUE}
 #Fit the path of Lasso models using x and y of train
 lasso.tr <- glmnet(x[train, ], y[train])
 
@@ -391,7 +396,7 @@ The fit shows us the __Degrees of Freedom__ (which is the number of non-zero coe
 
 Next we make predictions on the __Vlaidation__ set. 
 
-```{r lasso.pred, echo = TRUE}
+```{r lassopred, echo = TRUE}
 #Predict
 pred <- predict(lasso.tr, x[-train, ])
 
@@ -407,7 +412,7 @@ plot(log(lasso.tr$lambda), rmse, type = "b", xlab = "Log(Lambda)")
 
 __NOTE:__ When making predictions on the __Validation Set__, we get __`r dim(pred)[1]`__ observations. We also get __`r dim(pred)[2]`__ values of __Lambda__, so there are going to be __89__ different columns in the prediction matrix. When we compute the __Sum of Squared Errors__, `y[-train]` is a vector of length __83__, BUT `pred` is a matrix of __83 x 89__. So __R__ recycles the vector __89__ times and it does it column-wise, so that it can compute this difference. So the results of this is a matrix that's __83 x 89__, even though we only gave `y` as a vector.
 
-```{r best.lambda, echo = TRUE}
+```{r bestlambda, echo = TRUE}
 #Extract the best lambda
 best.lambda <- lasso.tr$lambda[order(rmse)[1]]
 

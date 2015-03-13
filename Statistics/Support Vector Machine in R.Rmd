@@ -1,11 +1,14 @@
 ---
 title: "My Support Vector Machine in R Notes"
 output: 
-    html_document:
+    pdf_document:
         toc: true
-        theme: united
-        highlight: tango
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
 ---
+
+\pagebreak
 
 # Support Vector Machines
 
@@ -56,7 +59,7 @@ print(svmfit)
 
 The summary shows that the number of __Support Vectors__ is __`r svmfit$tot.nSV`__. Remember, __Support Vectors__ are the points that are close to the decision boundary or on the wrong side of the boundary.
 
-```{r plot.svmfit, echo = TRUE}
+```{r plot_svmfit, echo = TRUE}
 #Plot the model
 plot(svmfit, df)
 
@@ -164,7 +167,7 @@ fit <- svm(factor(y)~., data = df2, kernel = "radial", scale = FALSE, cost = 5)
 
 Once again we will create a grid and make predictions on the grid. But the `mixture.rda` data includes grid points. `px1` and `px2`, for each variable included in the data frame. So we don't need to use the `make.grid()` function we created previously, we can simply use `expand.grid()` directly.
 
-```{r expand.grid, echo = TRUE, fig.height = 5, fig.width = 5}
+```{r expand_grid, echo = TRUE, fig.height = 5, fig.width = 5}
 #Call expand.grid on the included grid points
 xgrid <- expand.grid(X1 = px1, X2 = px2)
 
@@ -219,6 +222,8 @@ contour(px1, px2, matrix(func, length(ESL.mixture$px1),
 
 ```
 
+\pagebreak
+
 # Appendix A: Using Cross-Validation to determine the best Tuning Parameter
 
 In the examples above, the tuning parameter `cost` was already provided. The best possible value of this parameter can be evaluated using __Cross-Validation__. the `e1071` package provides a wrapper function, `tune()`, which by default uses 10-Fold Cross-Validation to find the best value for `cost`. The following is an implementation of a __Linear SVM Classifier__, using the `tune()` function using 10-Fold Cross-Validation on the models.
@@ -267,6 +272,8 @@ plot(xgrid, col = c("red", "blue")[as.numeric(ygrid)],
 points(x, col = y+3, pch = 19)
 
 ```
+
+\pagebreak
 
 # Appendix B: Manually applying the Tuning Parameter
 
