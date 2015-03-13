@@ -1,0 +1,361 @@
+---
+title: "My Support Vector Machine in R Notes"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+\pagebreak
+
+# Support Vector Machines
+
+To demonstrate the Support Vector Machines, it is easiest to work in low dimensions to properly visualize the data.  
+
+__NOTE:__ In the following examples, we will not be using cross-validation to select the cost parameters. For more information See Appendix A.
+
+## Linear SVM Classifier 
+
+To show the __Linear SVM Classifier__ we will generate some data in two dimensions and make them a little separated. The following plot shows this:
+
+```{r plot, echo = TRUE}
+#Set the seed
+set.seed(10111)
+
+#Create a matrix of 20 observations in two classes, normally distributed
+x <- matrix(rnorm(40), 20, 2)
+
+#Create the response variable -1 or +1 (10 in each class)
+y <- rep(c(-1, 1), c(10, 10))
+
+#Change the mean from 0 to 1 for any y = +1
+x[y == 1, ] = x[y == 1, ] + 1
+
+#Plot
+plot(x, col = y + 3, pch = 19)
+
+```
+
+Now that we have the two dimensional data, the `svm()` function that we use is found in the `e1071` package. After loading the package, we turn `y` into a factor variable and compute the fit.  
+
+__NOTE:__ We include a `cost` parameter, which is a tuning parameter. For more information on how to determine the `cost` parameter using cross-validation, see Appendix A.
+
+```{r svmfit, echo = TRUE}
+#Load the required packages
+require(e1071)
+
+#Create a data frame from the matrix and make `y` a factor variable
+df <- data.frame(x, y = as.factor(y))
+
+#Fit the model with a liner classifier and no variable standardization
+svmfit <- svm(y~., data = df, kernel = "linear", cost = 10, scale = FALSE)
+
+#Summary
+print(svmfit)
+
+```
+
+The summary shows that the number of __Support Vectors__ is __`r svmfit$tot.nSV`__. Remember, __Support Vectors__ are the points that are close to the decision boundary or on the wrong side of the boundary.
+
+```{r plot_svmfit, echo = TRUE}
+#Plot the model
+plot(svmfit, df)
+
+```
+
+The plot above shows the generic plotting function for the support vector machines. As can be seen, it's not a particularly nice plot function as it shows the decision boundary as jagged. Additionally, there's not much control over the colors and it breaks with convention since it puts __X2__ on the horizontal axis and __X1__ on the vertical axis (unlike what __R__ would automatically do for a matrix). Therefore, we will make our own plot.
+
+To do this, the first thing we do is make a grid of values (or lattice) for __X1__ and __X2__ using a function to reuse later. The function makes use of `expand.grid()` and produces the coordinates of `n * n` points on the lattice covering the domain of `x`. Having made the lattice, we make a prediction at each point on the lattice and then plot the lattice, color-coded according to the classification so that we can actually see the decision boundary. The support points( points on the margin or on the wrong side of the margin) are indexed in the `$index` component of the fit.
+
+```{r lattice, echo = TRUE, fig.height = 5, fig.width = 5}
+#make.grid function with inputs, x as the data matrix and no. points in each
+#direction, 75 in this case (75 x 75 grid)
+make.grid <- function(x, n = 75){
+    #Use apply() to get the range of each of the variables in `x`
+    grange <- apply(x, 2, range)
+    #For each (x1 and x2), use seq() to get the lowest to upper value and
+    #construct the grid of length n
+    x1 <- seq(from = grange[1, 1], to = grange[2, 1], length = n)
+    x2 <- seq(from = grange[1, 2], to = grange[2, 2], length = n)
+    #use epand.grid() to contruct the matrix
+    expand.grid(X1 = x1, X2 = x2)
+}
+
+#apply the function
+xgrid <- make.grid(x)
+
+#predict from from the svmfit at the values from xgrid
+ygrid <- predict(svmfit, xgrid)
+
+#make the plot
+#plot all the points in xgrid and color them according to the prediction
+plot(xgrid, col = c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .3)
+
+#overlay the origional points
+points(x, col = y+3, pch = 19)
+
+#show the support points from `$index`
+points(x[svmfit$index, ], pch = 5, cex = 2)
+
+```
+
+From the plot above, the decision boundary is now clearly visible. Each of the points is one of the points on the lattice and they have been color-coded as to where they classify. The original points have been overplayed and using `$index`, we can see which of them are our __support points__ (points that were instrumental in determining the decision boundary). 
+
+The `svm` function is not too friendly in that we have to do some work to get back the linear coefficients that one would use to describe the linear function. These coefficients can be derived from the objects on the fit, but that needs to be done manually. (Probably the reason is that this only makes sense for linear kernels and the function is more general). 
+
+Chapter 12 of __Elements of Statistical Learning__ shows a formula to use to extract the linear coefficients that describe the linear boundary, using the following equation:
+
+$$\beta_0+\beta_1X_1+\beta_2X_2=0$$
+
+From this equation we have to determine a __slope__ and an __intercept__ for the decision boundary.
+
+```{r coefficients, echo = TRUE}
+#Create beta and beta0 from "Chapter 12"
+beta <- drop(t(svmfit$coefs)%*%x[svmfit$index,])
+beta0 <- svmfit$rho
+
+#Recreate the lattice plot
+plot(xgrid, col =c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .3)
+points(x, col = y+3, pch = 19)
+points(x[svmfit$index, ], pch = 5, cex = 2)
+
+#Use the coefficients to draw decision boundary slope
+abline(beta0/beta[2], -beta[1]/beta[2])
+
+#Add the upper margin
+abline((beta0 - 1)/beta[2], -beta[1]/beta[2], lty = 2)
+
+#Add the lower margin
+abline((beta0 + 1)/beta[2], -beta[1]/beta[2], lty = 2)
+
+```
+
+## Non-linear SVM Classifier
+
+In this section we run the SVM on some data where a non-linear boundary is called for. To this end we take an example from the __Elements of Statistical Learning__ where will use a kernel support vector machine to learn the boundary using a data set found [here](http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/ESL.mixture.rda).
+
+
+```{r load, echo = TRUE}
+#The following code assumes the file has already been downloaded
+load("ESL.mixture.rda")
+
+#Since the training data is "x" and "y", we remove the current variables
+rm(x, y)
+
+#Attach the new data list
+attach(ESL.mixture)
+
+#Plot the data
+plot(x, col = y+1)
+
+```
+
+As with the previous example, the data is two-dimensional as can be seen from the above plot. Next we fit a nonlinear SVM using a __radial kernel__ and a cost parameter of __5__. 
+
+```{r fit, echo = TRUE}
+#Create a data frame, with the response "y" as a factor
+df2 <- data.frame(y = factor(y), x)
+
+#Fit the model using a "radial" kernel
+fit <- svm(factor(y)~., data = df2, kernel = "radial", scale = FALSE, cost = 5)
+
+```
+
+Once again we will create a grid and make predictions on the grid. But the `mixture.rda` data includes grid points. `px1` and `px2`, for each variable included in the data frame. So we don't need to use the `make.grid()` function we created previously, we can simply use `expand.grid()` directly.
+
+```{r expand_grid, echo = TRUE, fig.height = 5, fig.width = 5}
+#Call expand.grid on the included grid points
+xgrid <- expand.grid(X1 = px1, X2 = px2)
+
+#Predict the classification for each of the values on the grid
+ygrid <- predict(fit, xgrid)
+
+#Plot he points according to the decision boundary
+plot(xgrid, col = as.numeric(ygrid), pch = 19, cex = .3)
+
+#Overlay the origional points
+points(x, col = y+1, pch = 19)
+
+```
+
+It's clear to see from the above plot that the decision boundary is not linear. When the data points are overplayed, we can see that the decision boundary is, to a large extent, following where the data is. 
+
+We can improve the plot further and have the `predict()` function produce actual functional estimates at each of the grid points. We can include the actual curve that produces the decision boundary. This is accomplished using the `countour()` function. The __ESL.mixture__ data-set includes a variable called `prob`, which gives the true probability of a __+1__ versus a __-1__ at every value on the grid. If we plot the contour at __0.5__, which gives us the __Bayes Decision Boundry__, then we will predict from our model, not just the class label but the function itself. This produces the decision boundary that's learned from the data by plotting the contour of THAT function, the __0__ contour.  
+
+```{r contour, echo = TRUE}
+#predict the fit on the grid, BUT get the funciton as well
+func <- predict(fit, xgrid, decision.values = TRUE)
+
+###########################################################################
+# NOTE: The above returns the funciton as an attribute of the classified  #
+# values. Therefore we need to extract all the attributes and access the  #
+# one called `decision`                                                   #
+###########################################################################
+func <- attributes(func)$decision
+
+#Create the grid again
+xgrid <- expand.grid(X1 = px1, X2 = px2)
+ygrid <- predict(fit, xgrid)
+
+#Re-create the plot
+plot(xgrid, col = as.numeric(ygrid), pch = 20, cex = .3)
+points(x, col = y+1, pch = 19)
+
+#Create a contour of extracted function as a matrix with the dimesnions of px1
+#and px2, at level 0
+contour(px1, px2, matrix(func, length(ESL.mixture$px1),
+                         length(ESL.mixture$px2)),
+        level = 0,
+        add = TRUE)
+
+#Include the contour of the true probabilities (Bayes Decision Boundry)
+contour(px1, px2, matrix(func, length(ESL.mixture$px1),
+                          length(ESL.mixture$px2)),
+         level = 0.5, #0.5 contour
+         add = TRUE,
+         col = "blue",
+         lwd = 2)
+
+```
+
+\pagebreak
+
+# Appendix A: Using Cross-Validation to determine the best Tuning Parameter
+
+In the examples above, the tuning parameter `cost` was already provided. The best possible value of this parameter can be evaluated using __Cross-Validation__. the `e1071` package provides a wrapper function, `tune()`, which by default uses 10-Fold Cross-Validation to find the best value for `cost`. The following is an implementation of a __Linear SVM Classifier__, using the `tune()` function using 10-Fold Cross-Validation on the models.
+
+```{r tune, echo = TRUE}
+#Set the seed
+rm(x, y)
+set.seed(10111)
+
+#Create a matrix of 20 observations in two classes, normally distributed
+x <- matrix(rnorm(40), 20, 2)
+
+#Create the response variable -1 or +1 (10 in each class)
+y <- rep(c(-1, 1), c(10, 10))
+
+#Change the mean from 0 to 1 for any y = +1
+x[y == 1, ] = x[y == 1, ] + 1
+
+#Create a data frame from the matrix and make `y` a factor variable
+df3 <- data.frame(x, y = as.factor(y))
+
+#Fit the model with a liner classifier and determine the best one
+tuned <- tune(svm, y ~., data = df3, kernel='linear',
+                 ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+
+#Show a summary of the output
+summary(tuned)
+
+```
+
+From the summary above, we can see that the best model uses a cost of __100__ as opposed to the cost of __10__ used in the original example. The `tune()` function also stores the best model obtained, which can be accessed through `$best.model`, thus we can apply the prediction on the lattice plot using the `make.grid()` function.
+
+```{r lattice2, echo = TRUE}
+#apply the function
+xgrid <- make.grid(x)
+
+#predict from from the `$best.model` at the values from xgrid
+ygrid <- predict(tuned$best.model, xgrid)
+
+#make the plot
+#plot all the points in xgrid and color them according to the prediction
+plot(xgrid, col = c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .3)
+
+#overlay the origional points
+points(x, col = y+3, pch = 19)
+
+```
+
+\pagebreak
+
+# Appendix B: Manually applying the Tuning Parameter
+
+Although `$best.model` can be automatically applied to the `predict()` function to find a valid result, `tune()` is a wrapper function, therefore some of the other aspects of the lattice plot can not be used (e.g. `$coefs`). The following example uses the `tune()` function to determine the the best model, but it is manually applied to get a better lattice plot showing the linear coefficients.
+
+```{r lattice3, echo = TRUE}
+#Set the seed
+rm(x, y, xgrid, ygrid)
+set.seed(10111)
+
+#Create a matrix of 20 observations in two classes, normally distributed
+x <- matrix(rnorm(40), 20, 2)
+
+#Create the response variable -1 or +1 (10 in each class)
+y <- rep(c(-1, 1), c(10, 10))
+
+#Change the mean from 0 to 1 for any y = +1
+x[y == 1, ] = x[y == 1, ] + 1
+
+#Create a data frame from the matrix and make `y` a factor variable
+df4 <- data.frame(x, y = as.factor(y))
+
+#Fit the model with a liner classifier and determine the best one
+tuned2 <- tune(svm, y ~., data = df4, kernel='linear',
+                 ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+#Extract the best cost parameter
+c <- as.matrix(tuned2$best.parameters)
+
+#Manually fit the model with the best cost parameter
+svmfit2 <- svm(y~., data = df4, kernel = "linear", cost = c[1], scale = FALSE)
+
+#Create beta and beta0 from "Chapter 12"
+b <- drop(t(svmfit2$coefs)%*%x[svmfit2$index,])
+b0 <- svmfit2$rho
+
+#apply the make.grid function
+xgrid <- make.grid(x)
+
+#predict from from the svmfit2 at the values from xgrid
+ygrid <- predict(svmfit2, xgrid)
+
+#Recreate the lattice plot
+plot(xgrid, col =c("red", "blue")[as.numeric(ygrid)],
+     pch = 20, cex = .3)
+points(x, col = y+3, pch = 19)
+points(x[svmfit2$index, ], pch = 5, cex = 2)
+
+#Use the coefficients to draw decision boundary slope
+abline(b0/b[2], -b[1]/b[2])
+
+#Add the upper margin
+abline((b0 - 1)/b[2], -b[1]/b[2], lty = 2)
+
+#Add the lower margin
+abline((b0 + 1)/b[2], -b[1]/b[2], lty = 2)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
