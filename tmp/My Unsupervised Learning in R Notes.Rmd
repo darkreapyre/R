@@ -1,0 +1,268 @@
+---
+title: "My Unsupervised Learning in R Notes"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+\pagebreak
+
+# Abstract
+
+This document details testing with the following __Unsupervised__ Methods:  
+
+1. Principle Components
+2. K-Means Clustering
+3. Hierarchical Clustering
+
+# Principle Components  
+
+## Overview  
+
+For __Principle Components__, we will use a dataset already in __R__ called the `USArrests` data. This data set contains statistics, in arrests per 100,000 residents for assault, murder, and rape in each of the 50 US states in 1973. Also given is the percent of the population living in urban areas. The Data is provided as a data frame with __`r dim(USArrests)[1]`__ observations (for each of the States) and __`r length(USArrests)`__ variables for __`r names(USArrests)`__.
+
+To start, we look at the mean and the variance of the data:
+
+```{r, echo = TRUE}
+#Mean for the entire data set
+apply(USArrests, 2, mean)
+
+#Variance for the entire data set
+apply(USArrests, 2, var)
+
+```
+
+From the data above, we see tha the __means__ and the __variances__ are very different. __Principle Components__ are all about __variance__ (so the __means__ don't really play a role), so the __variance__ of the individual vriables are most important. This is due to the fact that we are looking for linear combinations that maximize the variance. So if there is a single variable that dominates with respect to variance it will be the principle component. this can be seen from the output of the variance above,`Assault` has the highest degree of variance over the other variables, so it will dominate the principle components and therefore we don't get anything meaningful from the data. This is basically because each of the different variables is measured in different units.  
+
+Therefore we need to standardize the variables when we perform Principle Components Analysis __(PCA)__. We standardize them all to have unit variances using `prcomp()`, with `scale = TRUE`.
+
+## Performing the Principle Components Alaysis
+
+```{r prcomp, echo = TRUE}
+#Perform a principle components analysis on the given data matrix
+pca.out <- prcomp(USArrests, scale = TRUE)
+
+#Returns the results as an object of class prcomp.
+pca.out
+
+```
+
+The standard deviations shown from the output are actually the standard deviations of the four principle components.
+There are four variables, so we can find four uncorrelated principle components. The standard deviations are always decreasing. The largest __`r pca.out$sdev[1]`__, then __`r pca.out$sdev[2]`__ and the smallest is __`r pca.out$sdev[length(pca.out$sdev)]`__.
+
+The next section of the output is what's called the rotation and these are the loadings. So the first principle component (__PC1__) is pretty much loaded equally on the three crimes and it's got a lower loading on urban population. So it seems like the first principle component is just a measure of how much crime there is and is just essentially an average of the three crimes. The second principle (__PC2__) component is more heavily loaded on whether the state has a high urban population or not. So it seems like the first two principal components, one has
+to do with the total amount of crime, and the other's to do with the urban population.
+
+__NOTE:__ It's important to remember that even though some of the signs are negative, the principle components don't care about sign, because the variance of a negative variable is the same as the if you multiply it by $-1$.
+
+## Visualizing the Principle Components
+
+There's a very useful way of looking at principal components called a biplot.
+
+```{r biplot, echo = TRUE, fig.width = 12, fig.height = 12}
+#Create a biplot
+biplot(pca.out, scale = 0)
+
+```
+
+Running `biplot` has produced a  plot of the first two principal components. Since the observations are the states, we see a position for each of the states in this plot, where the actual name of the state is written out. In red, superimposed on the plot, is the directions of the loadings for the principal components themselves - the direction vectors. When analyzing the these further, ee see that this first access is largely due to the three types of crime (__`r names(USArrests)`__). Recall, the component was negative (negative loadings), so negative scores mean negative __X__ negative is positive. So these are the states in this end that have got overall high crime, Florida, Nevada, California, Michigan and New Mexico. At the other end of the scale are the states with low total crime, Maine, North Dakota and New Hampshire. So this first axis is really to do with amount of crime in the state. 
+
+For the second axis, the loading was mostly urban population. This axis is really about whether the state has
+got a large urban population or not and that also had a negative loading. New Jersey has got a high urban population and Arkansas is on the lower side. Mississippi and North Carolina are much lower.
+
+__NOTE:__ The plot is called a biplot, where the word "bi" means both the loadings and the principal
+component scores are put in one plot.
+
+# K-Means Clustering  
+
+## Overview  
+
+The next method is called __K-Means Clustering__, which is a very useful tool for funding clusters in the data. This method works in any dimension, but in order to demonstrate it fully, the following example will be in two dimensions to see the performance through plotting. To start, we will create "fake"" data where we shif the means of the points around.
+
+```{r fakedata, echo = TRUE, fig.height = 8, fig.width = 8}
+#Set the seed for reproduceability
+set.seed(101)
+
+#Create a two-column matrix of random normal values
+x <- matrix(rnorm(100 * 2), 100, 2)
+
+#Generate some "means" to displace the Gaussians above by shifting the means
+xmean <- matrix(rnorm(8, sd = 4), 4, 2) #4 Clusters
+
+#randomly assign sampkle means to `x`
+assignMeans <- sample(1:4, 100, replace = TRUE)
+x <- x + xmean[assignMeans, ]
+
+#Plot the resultant matrix
+plot(x, col = assignMeans, pch = 19)
+
+```
+
+The plot shows the "fake" data with the two dimensions/coordinates. At each point, is a number 1 to 4, that tells it which cluster it belongs to (depcited by a color, black, red, green, and blue). And so, these are the data. So even though we can vizualize the clusters, we hand the data to the K-Means algorithm to find them
+automatically.
+
+## Fitting the K-Means Model
+
+```{r, km,  echo = TRUE}
+#Fit the model, specifying the number of clusters
+km.out <- kmeans(x, 4, nstart = 15) #15 random start locations
+
+#view the summary output
+km.out
+
+```
+
+From the output, we can see:
+
+1. The __Mean__ for each cluster (4 of them).
+2. The __Cluster Vector__, which of the 4 clusters each data pint is assigned to.
+3. The summeries for each of the clusters:
+    - The __Sum of Squares__ for each of the 4 clusters.
+    - The __Between Sum of Squares__ and __Total Sum of Squares__ is like the $R^2$ for clustering. It's the percentage of variance explained, which in this case is high ($\pm$ __`r round(km.out$betweenss/km.out$totss*100)`%__). This suggests that `kmeans()` has done a good job. 
+
+__NOTE:__ It's important to note when running `kmeans()`, that we have specified the number of clusters as __4__. If we told it there were 3 clusters, it would probably find 2 of the clusters and then merge the other two of them together.
+
+## Visualizing the K-Means
+
+```{r, plot, echo = TRUE, fig.width = 8, fig.height = 8}
+#Plot the Cluster Vector 
+plot(x, col = km.out$cluster, cex = 2, pch = 1, lwd = 2)
+
+#Add origional data points and correct for color assignemnts
+points(x, col = c(4, 3, 2, 1)[assignMeans], pch = 19)
+
+```
+
+The plot above shows the cluster assignments found by the __K-Means__ Algorithm. __Note__ the black point, which actually belonged to the black cluster from the original data, BUT was assigned to the green cluster. Also there's a blue point that originally belonged to blue cluster, but has now been assigned to the black cluster. Please see __Appendix A__ which highlights discrepencies when generating the colos for the plots and how to redolve these discrepenacies.
+
+# Hierarchical Clustering
+
+## Overview
+
+To demonstrate Hierarchical Clustering, which is another form of clustering as it works off a distance matrix, we wil use the same "fake" data as before. 
+
+## Generating the Hiurarchical Cluster
+
+To build the cluster, we will compute the distance of __X__ using the `dist()` function, which create a __100__ by __100__ pair-wise distance matrix from the "fake" data and then call `hclust()`, which is the tool for doing Heirachical Clustering. 
+
+```{r complete, echo = TRUE, fig.height = 8, fig.width = 12}
+#Generate the model with the largest distanve between clusters
+hc.complete <- hclust(dist(x), method = "complete")
+
+#Make a plot
+plot(hc.complete)
+
+```
+
+Recall that the __Cluster Dendrogram__ shown above is a bottom-up clustering technique, where it continuously joins together smaller clusters is to make bigger clusters, until eventually you get to one big cluster. We know from the "fake" data that there are four natural clusters in the data and we can see from the heights of the arms of the dendogram, that it's evident that they are four big clusters. These will almost certainly correspond to the
+original divisions in the data that was created. Using `method = "complete"`, the Algorithm decides how close two clusters are, it uses the largest pair-wise distance between a point in one cluster and a point in
+another cluster.
+
+There are other methods that can be used like __Single Linkgage__ clustering, which uses the smallest pair-wise distance between a point in one cluster and a point in another cluster, as is seen in the following:
+
+```{r single, echo = TRUE, fig.height = 8, fig.width = 12}
+#Generate the modelwith the smallest distance between clusters
+hc.single  <- hclust(dist(x), method = "single")
+
+#Make a plot
+plot(hc.single)
+
+```
+
+As can be seen from the plot above, the __Cluster Dendrogram__ is very difference when using the smallest distance between clusters. 
+
+\pagebreak
+
+# Appendix A: K-Means Plotting Discrepancies
+
+When first plotting the results of the the output from `kmeans()`, we get the following plot:
+
+```{r kmplot1, echo = TRUE, fig.width = 8, fig.height = 8}
+#Set the seed for reproduceability
+set.seed(101)
+
+#re-generate the fake data
+x <- matrix(rnorm(100 * 2), 100, 2)
+
+#Generate some "means" to displace the Gaussians above by shifting the means
+xmean <- matrix(rnorm(8, sd = 4), 4, 2) #4 Clusters
+
+#randomly assign sampkle means to `x`
+assignMeans <- sample(1:4, 100, replace = TRUE)
+x <- x + xmean[assignMeans, ]
+
+#Fit the model, specifying the number of clusters
+km.out <- kmeans(x, 4, nstart = 15) #15 random start locations
+
+#Plot the cluster Vector
+plot(x, col = km.out$cluster, cex = 2, pch = 1, lwd = 2)
+
+```
+
+__Note__ that the coloring scheme shown is not the sames as the origional color scheme used when we generated the data. The above coloring scheme depcists the cluster assignments found by the K-means clustering algorithm and the difference is distictly visible When we overlay the above plot on the origional data (with the original clusters):
+
+```{r kmplot2, echo = TRUE, fig.width = 8, fig.height = 8}
+#Plot the cluster Vector
+plot(x, col = km.out$cluster, cex = 2, pch = 1, lwd = 2)
+points(x, col = assignMeans, pch = 19)
+
+```
+
+It is clearly evedent that we have a color mismatch. This is becasue we named the clusters 1 to 4 in some order. The K-Means clustering algorithm found four clusters and it named them 1 to 4, BUT the ordering is arbitrary, so it picked a different order. So to produce the final plot showing the results of the K-Means Algorithm with the origional clusters we created, we just reassign the colors as follows:
+
+```{r kmplot3, echo = TRUE, fig.height = 8, fig.width = 8}
+#Plot the cluster Vector
+plot(x, col = km.out$cluster, cex = 2, pch = 1, lwd = 2)
+
+#Add origional data points and correct for color assignemnts
+points(x, col = c(4, 3, 2, 1)[assignMeans], pch = 19)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
