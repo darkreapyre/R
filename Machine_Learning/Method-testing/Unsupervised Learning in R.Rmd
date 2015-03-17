@@ -50,16 +50,43 @@ pca.out
 
 ```
 
-The standard deviations shown from the output are actually the standard deviations of the four principle components.
-There are four variables, so we can find four uncorrelated principle components. The standard deviations are always decreasing. The largest __`r pca.out$sdev[1]`__, then __`r pca.out$sdev[2]`__ and the smallest is __`r pca.out$sdev[length(pca.out$sdev)]`__.
+The standard deviations shown from the output are actually the standard deviations of the four principle components. There are four variables, so we can find four uncorrelated principle components. The standard deviations are always decreasing. The largest __`r pca.out$sdev[1]`__, then __`r pca.out$sdev[2]`__ and the smallest is __`r pca.out$sdev[length(pca.out$sdev)]`__.
 
 The next section of the output is what's called the rotation and these are the loadings. So the first principle component (__PC1__) is pretty much loaded equally on the three crimes and it's got a lower loading on urban population. So it seems like the first principle component is just a measure of how much crime there is and is just essentially an average of the three crimes. The second principle (__PC2__) component is more heavily loaded on whether the state has a high urban population or not. So it seems like the first two principal components, one has to do with the total amount of crime, and the other has to do with the urban population.
 
 __NOTE:__ It's important to remember that even though some of the signs are negative, the principle components don't care about sign, because the variance of a negative variable is the same as the if you multiply it by $-1$.
 
+Another way to see this is to show the __Variance Explained__. This is done by simply squaring the __Standard Deviations__ of each principle component and divide them by the __Total variance__. 
+
+```{r varexp, echo = TRUE}
+#Square each of the Principle Component's SD
+pca.var <- pca.out$sdev ^ 2
+
+#Clculate the proportion of variance explained
+pca.exp <- pca.var/sum(pca.var)
+
+```
+
+Now we can see that __PC1__ explains __~`r round(pca.exp[1]*100)`%__ of the __Variance Explained__ while __PC2__ explains __~`r round(pca.exp[2]*100)`%__ of the __Variance Explained__ etc. This can be further visualized by the following plots:
+
+```{r varexplot, echo = TRUE}
+#Create the plotting framework
+par(mfrow = c(1, 2))
+
+#Plot the proportion of variance explaind
+plot(pca.exp, xlab = "Principle Component",
+     ylab = "Proportion of Variance Explained", ylim = c(0, 1), type = "b")
+
+#Plot the Overall proportion of the variance explained
+plot(cumsum(pca.exp), xlab = "Principle Component",
+     ylab = "Cumulative Proportion of Variance Explained", ylim = c(0,1),
+     type = "b")
+
+```
+
 ## Visualizing the Principle Components
 
-There's a very useful way of looking at principal components called a biplot.
+Outside of the __Variance Explained__, there is also a very useful way of looking at principal components, by using what's called a biplot.
 
 ```{r biplot, echo = TRUE, fig.width = 12, fig.height = 12}
 #Create a biplot
@@ -120,7 +147,7 @@ From the output, we can see:
 2. The __Cluster Vector__, which of the 4 clusters each data pint is assigned to.
 3. The summaries for each of the clusters:
     - The __Sum of Squares__ for each of the 4 clusters.
-    - The __Between Sum of Squares__ and __Total Sum of Squares__ is like the $R^2$ for clustering. It's the percentage of variance explained, which in this case is high ($\pm$ __`r round(km.out$betweenss/km.out$totss*100)`%__). This suggests that `kmeans()` has done a good job. 
+    - The __Between Sum of Squares__ and __Total Sum of Squares__ is like the $R^2$ for clustering. It's the percentage of variance explained, which in this case is high ( __~`r round(km.out$betweenss/km.out$totss*100)`%__). This suggests that `kmeans()` has done a good job. 
 
 __NOTE:__ It's important to note when running `kmeans()`, that we have specified the number of clusters as __4__. If we told it there were 3 clusters, it would probably find 2 of the clusters and then merge the other two of them together.
 
