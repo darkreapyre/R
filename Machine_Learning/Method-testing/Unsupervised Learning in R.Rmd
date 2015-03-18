@@ -56,7 +56,9 @@ The next section of the output is what's called the rotation and these are the l
 
 __NOTE:__ It's important to remember that even though some of the signs are negative, the principle components don't care about sign, because the variance of a negative variable is the same as the if you multiply it by $-1$.
 
-Another way to see this is to show the __Variance Explained__. This is done by simply squaring the __Standard Deviations__ of each principle component and divide them by the __Total variance__. 
+Another way to see this is to show the __Variance Explained__. This is done by using the following formula:
+
+$$Varience\hspace{2 pt}Explained=\frac{(Standard\hspace{2 pt}Deviations)^2}{Total\hspace{2 pt}Variance}$$
 
 ```{r varexp, echo = TRUE}
 #Square each of the Principle Component's SD
