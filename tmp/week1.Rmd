@@ -14,6 +14,8 @@ output:
 
 # Francis Galton
 
+## Background 
+
 Data first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpretable models.
 
 ```{r galton, echo = TRUE}
@@ -37,7 +39,9 @@ So to define the middle we look for the value of $\mu$ that mimimizes $$\sum_{i=
 
 __The sum of the squared distances between the data and the "middle" value.__
 
-This turns out to be the center of mass of the histogram, the point the mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ ($\mu=\bar{X}$).
+This turns out to be the center of mass of the histogram, the point the mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ or $\mu=\bar{X}$.
+
+Remember that in Statistics, $\bar{X}$ is the __sample mean__ and $\mu$ is the __population mean__.
 
 ## Proof 
 
@@ -64,4 +68,70 @@ Hist <- function(mu){
 
 ```
 
+So even though this can be seen visually, by using the `manipulate()` function and manually moving around the "red line", to find the exact optimal place that will balance out the Histogram.
 
+Below is the actualy Histrogram of the __Empirical Mean__ of __`r mean(galton$child)`__.
+
+```{r empirical, echo = TRUE}
+#Plot the Empirical Mean
+hist(galton$child, col = "blue", breaks = 100)
+mean.child <- mean(galton$child)
+lines(rep(mean.child, 100), seq(0, 150, length = 100), col = "red", lwd = 5)
+
+```
+
+## Comparing Children's Heights vs. Parebt's Heights
+
+Doing this comparision is the heart of regression, basically how do we draw a line through Galton's Data as the following example plot shows:
+
+__NOTE:__ Size of point represents number of points at the (X, Y) combination. Additionally the regression line is centered through the average value.
+
+```{r comparison, echo = TRUE}
+myPlot <- function(beta){
+        y <- galton$child - mean(galton$child)
+        x <- galton$parent - mean(galton$parent)
+        freqData <- as.data.frame(table(x, y))
+        names(freqData) <- c("child", "parent", "freq")
+        plot(
+                as.numeric(as.vector(freqData$parent)),
+                as.numeric(as.vector(freqData$child)),
+                pch = 21, col = "black", bg = "lightblue",
+                cex = .15 * freqData$freq,
+                xlab = "parent",
+                ylab = "child"
+                )
+        abline(0, beta, lwd = 3)
+        points(0, 0, cex = 2, pch = 19)
+        mse <- mean((y - beta * x)^2)
+#        title(paste("beta = ", beta, "mse = ", round(mse, 3)))
+}
+
+#To call this and use manipulate in R, simply run the following:
+#manipulate(myPlot(beta), beta = slider(0.8, 1.2, step = 0.02))
+
+#sample plot
+myPlot(0.8)
+
+```
+
+
+
+
+```{r test, echo = TRUE}
+require(dplyr)
+freqData <- as.data.frame(table(galton$child, galton$parent))
+names(freqData) <- c("child", "parent", "freq")
+freqData$child <- as.numeric(as.character(freqData$child))
+freqData$parent <- as.numeric(as.character(freqData$parent))
+g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
+g <- g  + scale_size(range = c(2, 20), guide = "none" )
+g <- g + geom_point(colour="grey50", aes(size = freq+20, show_guide = FALSE))
+g <- g + geom_point(aes(colour=freq, size = freq))
+g <- g + scale_colour_gradient(low = "lightblue", high="white")                    
+lm1 <- lm(galton$child ~ galton$parent)
+g <- g + geom_abline(intercept = coef(lm1)[1], slope = coef(lm1)[2], size = 3, colour = grey(.5))
+g
+
+
+lm1
+```
