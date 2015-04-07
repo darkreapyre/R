@@ -1,0 +1,67 @@
+---
+title: "Introduction to Regression - Week 1 Notes"
+author: "Trenton Potgieter"
+date: "Monday, April 06, 2015"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+\newpage
+
+# Francis Galton
+
+Data first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpretable models.
+
+```{r galton, echo = TRUE}
+require(UsingR)
+
+#Load the Data
+data(galton)
+
+#Plot the Child and parent data
+par(mfrow = c(1, 2))
+hist(galton$child, col = "blue", breaks = 100) #100 histogram breaks
+hist(galton$parent, col = "blue", breaks = 100) #100 histogram breaks
+
+```
+
+The plots above do not descibe the joint relationship. To uderstand the joint relationship we need to first understand summarizing the __marginal__. The marginal is the distribution (on the histograms) of __Children__, disregarding __Parents__ and the distibution of __Parents__, disregarding __Children__, so summarizing the marginal informaion in each Histogram by themselves is a way of describing the "middle" of these datasets.
+
+To do this, let's consider the __children's heights__. So let $Y_i$ be the height of a particular __child__ $i$ for $i=1,\ldots,n$, where $n=928$ (the number of __Children__).
+
+So to define the middle we look for the value of $\mu$ that mimimizes $$\sum_{i=1}^n(Y_i -\mu)^2$$
+
+__The sum of the squared distances between the data and the "middle" value.__
+
+This turns out to be the center of mass of the histogram, the point the mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ ($\mu=\bar{X}$).
+
+## Proof 
+
+To prove this we will use the `manipulate()` function in `R` to se what value of $\mu$ minimizes the sum of squared deviations.
+
+```{r manipulate, echo = TRUE}
+require(manipulate)
+
+#Create the Hist() Function
+Hist <- function(mu){        
+        #Create a histogram of the child data as before
+        hist(galton$child, col = "blue", breaks = 100)
+        #Draw the line that can be used by manipulate
+        lines(c(mu, mu), c(0, 150), col = "red", lwd = 5)
+        #Clculate the mean squared error
+        mse <- mean((galton$child - mu)^2)
+        #Create the labels
+        text(63, 150, paste("mu = ", mu))
+        text(63, 140, paste("MSE = ", round(mse, 2)))
+}
+
+#To call this and use manipulate in R, simply run the following:
+#manipulate(Hist(mu), mu = slider(62, 74, step = 0.5))
+
+```
+
+
