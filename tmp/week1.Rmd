@@ -1,5 +1,5 @@
 ---
-title: "Introduction to Regression - Week 1 Notes"
+title: "Regression Models - Week 1 Notes"
 author: "Trenton Potgieter"
 date: "Monday, April 06, 2015"
 output: 
@@ -12,7 +12,7 @@ output:
 
 \newpage
 
-# Francis Galton
+# Introduction
 
 ## Background 
 
@@ -39,13 +39,13 @@ So to define the middle we look for the value of $\mu$ that mimimizes $$\sum_{i=
 
 __The sum of the squared distances between the data and the "middle" value.__
 
-This turns out to be the center of mass of the histogram, the point the mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ or $\mu=\bar{X}$.
+This turns out to be the center of mass of the histogram, the point that mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ or $\mu=\bar{X}$.
 
 Remember that in Statistics, $\bar{X}$ is the __sample mean__ and $\mu$ is the __population mean__.
 
 ## Proof 
 
-To prove this we will use the `manipulate()` function in `R` to se what value of $\mu$ minimizes the sum of squared deviations.
+To prove this we will use the `manipulate()` function in `R` to se what value of $\mu$ minimizes the sum of squared deviations. (For mathematical proof, see Appendix A)
 
 ```{r manipulate, echo = TRUE}
 require(manipulate)
@@ -89,11 +89,18 @@ Doing this comparision is the heart of regression, basically how do we draw a li
 __NOTE:__ Size of the points represents number of points at the (X, Y) combination. Additionally the regression line is centered through the average value.
 
 ```{r comparison, echo = TRUE}
+#Create the X and Y Coordinates
 y <- galton$child - mean(galton$child)
 x <- galton$parent - mean(galton$parent)
+
+#Capture the frequency of each occurance 
 freqData <- as.data.frame(table(x, y))
 names(freqData) <- c("child", "parent", "freq")
+
+#Fit a basic Linear Model using lm()
 fit <- lm(y~x, data = freqData)
+
+#Plot the data and linear fit
 plot(
     as.numeric(as.vector(freqData$parent)),
     as.numeric(as.vector(freqData$child)),
@@ -106,7 +113,24 @@ plot(
 
 ```
 
+__NOTE:__ To better illustrate the impact that the least squares criteria has on the graph (using the `manipulate()` function, see Appendix B). 
+
 ### Solution
+
+As can be seen from the plot, we have fit a linear model to the data, basically by using the following:
+
+```{r slope, echo = TRUE}
+slope <- lm(I(child - mean(child))~I(parent - mean(parent)) -1, data = galton)
+slope
+```
+
+This produces the value that minimizes the least squares criteria: __0.646__
+
+The rest of this document will show __how__ to the solution automatically and also __why__ this is the solution. 
+
+# Basic Notation and Definitions
+
+
 
 \newpage
 
@@ -131,3 +155,33 @@ $$
  & \geq \sum_{i=1}^n \left(Y_i - \bar Y\right)^2 \
  \end{aligned}
 $$
+
+\newpage
+
+#Appendix B: Using `manipulate()` to show Least Squares
+
+```{r B, echo = TRUE}
+require(manipulate)
+myPlot <- function(beta){
+    y <- galton$child - mean(galton$child)
+    x <- galton$parent - mean(galton$parent)
+    freqData <- as.data.frame(table(x, y))
+    names(freqData) <- c("child", "parent", "freq")
+    plot(
+        as.numeric(as.vector(freqData$parent)),
+        as.numeric(as.vector(freqData$child)),
+        pch = 21, col = "black", bg = "lightblue",
+        cex = .15 * freqData$freq,
+        xlab = "Parent",
+        ylab = "Child"
+        )
+    abline(0, beta, lwd = 3)
+    points(0, 0, cex = 2, pch = 19)
+    mse <- mean((y - beta * x)^2)
+    title(paste("beta = ", beta, "mse = ", round(mse, 3)))
+}
+
+#To execute, load the following using manipulate()
+#manipulate(myPlot(beta), beta = slider(0.6, 1.2, step = 0.02))
+
+```
