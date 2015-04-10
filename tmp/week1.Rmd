@@ -1,5 +1,5 @@
 ---
-title: "Regression Models - Week 1 Notes"
+title: "Regression Models - My Week 1 Notes"
 author: "Trenton Potgieter"
 date: "Monday, April 06, 2015"
 output: 
@@ -16,10 +16,12 @@ output:
 
 ## Background 
 
-Data first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpretable models.
+Data first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpret able models.
 
 ```{r galton, echo = TRUE}
 require(UsingR)
+require(dplyr)
+require(manipulate)
 
 #Load the Data
 data(galton)
@@ -31,25 +33,23 @@ hist(galton$parent, col = "blue", breaks = 100) #100 histogram breaks
 
 ```
 
-The plots above do not descibe the joint relationship. To uderstand the joint relationship we need to first understand summarizing the __marginal__. The marginal is the distribution (on the histograms) of __Children__, disregarding __Parents__ and the distibution of __Parents__, disregarding __Children__, so summarizing the marginal informaion in each Histogram by themselves is a way of describing the "middle" of these datasets.
+The plots above do not describe the joint relationship. To understand the joint relationship we need to first understand summarizing the __marginal__. The marginal is the distribution (on the histograms) of __Children__, disregarding __Parents__ and the distribution of __Parents__, disregarding __Children__, so summarizing the marginal information in each Histogram by themselves is a way of describing the "middle" of these data sets.
 
 To do this, let's consider the __children's heights__. So let $Y_i$ be the height of a particular __child__ $i$ for $i=1,\ldots,n$, where $n=928$ (the number of __Children__).
 
-So to define the middle we look for the value of $\mu$ that mimimizes $$\sum_{i=1}^n(Y_i -\mu)^2$$
+So to define the middle we look for the value of $\mu$ that minimizes $$\sum_{i=1}^n(Y_i -\mu)^2$$
 
 __The sum of the squared distances between the data and the "middle" value.__
 
-This turns out to be the center of mass of the histogram, the point that mimimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ or $\mu=\bar{X}$.
+This turns out to be the center of mass of the histogram, the point that minimizes the average squared distance from all the other points (Least Squares). So in this case the answer is the __sample mean__ or $\mu=\bar{X}$.
 
 Remember that in Statistics, $\bar{X}$ is the __sample mean__ and $\mu$ is the __population mean__.
 
 ## Proof 
 
-To prove this we will use the `manipulate()` function in `R` to se what value of $\mu$ minimizes the sum of squared deviations. (For mathematical proof, see Appendix A)
+To prove this we will use the `manipulate()` function in `R` to see what value of $\mu$ minimizes the sum of squared deviations. (For mathematical proof, see Appendix A)
 
 ```{r manipulate, echo = TRUE}
-require(manipulate)
-
 #Create the Hist() Function
 Hist <- function(mu){        
         #Create a histogram of the child data as before
@@ -70,7 +70,7 @@ Hist <- function(mu){
 
 So even though this can be seen visually, by using the `manipulate()` function and manually moving around the "red line", to find the exact optimal place that will balance out the Histogram.
 
-Below is the actualy Histrogram of the __Empirical Mean__ of __`r mean(galton$child)`__.
+Below is the actual Histogram of the __Empirical Mean__ of __`r mean(galton$child)`__.
 
 ```{r empirical, echo = TRUE}
 #Plot the Empirical Mean
@@ -84,7 +84,7 @@ lines(rep(mean.child, 100), seq(0, 150, length = 100), col = "red", lwd = 5)
 
 ### Objective 
 
-Doing this comparision is the heart of regression, basically how do we draw a line through Galton's Data as the following example plot shows:
+Doing this comparison is the heart of regression, basically how do we draw a line through Galton's Data as the following example plot shows:
 
 __NOTE:__ Size of the points represents number of points at the (X, Y) combination. Additionally the regression line is centered through the average value.
 
@@ -128,9 +128,142 @@ This produces the value that minimizes the least squares criteria: __0.646__
 
 The rest of this document will show __how__ to the solution automatically and also __why__ this is the solution. 
 
-# Basic Notation and Definitions
+# Important Notation and Definitions
+
+1. $X_1,X_2,\dots,X_n$ is used to describe $n$ data points. For example the data set $\{1, 2, 5\}$, is as follows $X_1=1,X_2=2,X_3=3$ and $n=3$.
+2. The Greek alphabet is used to describe population variables that are unknown. For example, $\mu$ is used to describe the estimated Population Mean.
+3. Non-Greek letters are used to describe something that is observable. For example, $\bar X$
+
+## Example 1: Finidng the empirical (sample) mean of the data set
+
+1. Define the empirical mean as: __We take the data, add it up and divide by the nunmber of observations__
+
+$$\bar X = \frac{1}{n}\sum_{i=1}^n X_i$$
+
+(The sample mean is ususally denoted by a letter with a "bar" over it, in this case $\bar X$ is the sample mean of the collection of $X$'s. This is eualy to $\frac{1}{b}$ multiplied by all the $X$'s.)
 
 
+2. If we subtract the mean form every data point, then the result is a new data set with $n$ observations, but the new data set has the mean of $0$. So notationlly if we define:
+
+$$\tilde X_i=X_i-\bar X_i$$
+
+(Each $X_i$ subtracing off the mean ($\bar X$), the the new data set ($\tilde X_i$) have a mean $0$.)
+
+3. This process is refered to as __"centering"__ random variables. which can be proved empiricaly by generating random vectoirs, subtracting the mean from each element of the vector and taking the mean of the new vector, which will always be $0$.
+
+4. Recall from the outset that the sample mean is the __least squares__ solution. So to find tha value of $\mu$ that minimizes the following equation, then that $\mu$ works out to be $\bar X$.
+
+$$\sum_{i=1}^n\left(\bar X_i - \mu\right)^2$$
+
+## Example 2: Finding the empirical standard deviation and variance
+
+1. Variance is usually denoted by $S^2$ and is given by the following formula:
+
+$$
+ \begin{aligned}
+ S^2 & = \frac{1}{n-1} \sum_{i=1}^n \left(X_i - \bar X\right) \\
+ & = \frac{1}{n-1}\left(\sum_{i=1}^n X_i^2 - n\bar X^2\right) \
+ \end{aligned}
+$$
+
+(The avergae squared deviation of the obersavation around the mean.)
+
+2. The empirircal standard deviation is simply the square root of the variace.:
+
+$$S = \sqrt S^2$$
+
+(Standard deviations are good to work with as the vriance is expressded in whaatever units $X$ has but squared, wheras the standard deviation is expressed int he normal units of $X$.)
+
+3. Similar to __"centering"__, where we subtract the mean from every observation to produce a resulting data set of mean $0$. If we divide every obersation by the standard deviation ($\frac{X_i}{S}$), the resulting data set will have a standard of $1$. This is refered to as __"scaling"__ the data.
+
+## Example 3: Normalization
+
+1. If we take the original data and subtract off $\bar X$ and then take the resulting __"centered"__ data and scale it by $S$, we get a new data set ($Z_i$), and this has empirical mean $0$ and empirical standard deviation $1$, as follows:
+
+$$Z_i = \frac{X_i - \bar X}{S}$$
+
+2. This process of __"centering"__ and then __"scaling"__ is called __"normalizing"__ the data.
+
+3. Normailzed data is centered at $0$ and have units equal to standard deviations away from the mean. For example, a value of $2$ from nomraized means that that data point was two stndard deviations larger then the mean.
+
+4. As the name suggests, normalization is an attewmpt to make otherwise non-comparbale ata sets comparable.
+
+## Example 4: Finding the empirical covariance (correlation)
+
+1. Empirical covariance is the most central quantity in regression.
+
+2. Consider two vectors $\left(X_i, Y_i\right)$ that are lined-up. So $X_1$ might be the __BMI__ for subject $1$ and $Y_1$ might be the __BLood Pressure__ for subject $1$. $X_2$ might be the __BMI__ for subject $2$ and $Y_2$ might be the __BLood Pressure__ for subject $2$ etc. 
+
+3. This data wil allow us to create a meaning scatterplot.
+
+4. Based on this, we can define the covariance as follows:
+
+$$
+ \begin{aligned}
+ Cov\left(X, Y\right) & = \frac{1}{n-1}\sum_{i=1}^n\left(X_i - \bar X\right) \
+ \left(Y_i - \bar Y\right) \\
+ & = \frac{1}{n-1} \left(\sum_{i=1}^n X_i Y_i - n \bar X \bar Y\right) \
+ \end{aligned}
+$$
+
+(Basically the Summation of the $X$ deviations from their mean multiplied by the $Y$ deviations from their mean, over $n$)
+
+5. The correlation is simply the covariance standardized into a unitless quantity:
+
+$$Cor\left(X, Y\right) = \frac{Cov\left(X, Y\right)}{S_x S_y}$$
+
+(The correlation is the covariance of $X$ and $Y$, which has units of $X$ times uits of $Y$. Then we divide by the standard deviation of $x$ and the standard deviation of $y$. So we get a unit free quantity.)
+
+6. Basically, $S_x$ and $S_y$ are the esitmated of the standard deviations from the $X$ observations and the $Y$ observations respectivley.
+
+## Basic facts about correlation
+
+1. The correlation of $X$ and $Y$ is equal to the corelation of $Y$ and $X$:
+
+$$Cor\left(X, Y\right) = Cor\left(Y, X\right)$$
+
+2. Correlation of $X$ and $Y$ has to be between $-1$ and $+1$:
+
+$$-1 \leq Cor\left(X, Y\right) \leq 1$$
+
+3. Correlation will only achieve these bounds of $Cor\left(X, Y\right) = 1$ and $Cor\left(X, Y\right) = -1$ when the $X$ and $Y$ observations fall perfectly on a positivley or negatively sloped line i.e. a positive line for a corellation of $1$ and negative line for a correaltion of $-1$.
+
+4. Correlation meansures the strength of the linear realtionship between $X$ and $Y$ and is __central__ to __Linear Regression__. We estimate a stronger realtionship, the closer the correlation is to the extemes of $-1$ or $+1$.
+
+5. A corelation of $0$ implies no linear realtionship:
+
+$$Cor\left(X, Y\right) = 0$$
+
+# Least squares estimation of regression lines 
+
+Now that there is an understanding of some fo the basic definiations and notation used, consider again the parent and child height data from the Galton data.
+
+```{r recap, echo=TRUE}
+freqData <- as.data.frame(table(galton$child, galton$parent))
+names(freqData) <- c("child", "parent", "freq")
+freqData$child <- as.numeric(as.character(freqData$child))
+freqData$parent <- as.numeric(as.character(freqData$parent))
+g <- ggplot(filter(freqData, freq > 0), aes(x = parent, y = child))
+g <- g  + scale_size(range = c(2, 20), guide = "none" )
+g <- g + geom_point(colour="grey50", aes(size = freq+20, show_guide = FALSE))
+g <- g + geom_point(aes(colour=freq, size = freq))
+g <- g + scale_colour_gradient(low = "lightblue", high="white")  
+g
+```
+
+Recall from the above scatterplot that the size of the circle represents the freqyancy of the particular $\left(X, Y\right)$ combination. Based on this we want to use the Parent's Height to _explain__ the Child's Height using Linear Regression.
+
+## Fitting the best line
+
+To begin, let $Y_i$ be the $i^{th}$ child's height and let $X_i$ be the $i^{th}$ parent's heights. Note that this is the average over both of the parent's hights. So to find the line that fits' the __best__ line using the least sqaures. But we want the line to look like child's height times the __intercept__ ($\beta_0$) plus the parent'a height times the __slope__ ($\beta_1$).
+
+So $\beta_0$ and $\beta_1$ are parameters that we would like to know but corrently don't know and in order to find the  __"best"__ line that fits the data, we need a criteria, the least squares criteria:
+
+$$\sum_{i=1}^n \{Y_i - \left(\beta_0 + \beta_1 X_i\right)\}^2$$
+
+The basic idea of the equation is that we want to minimize the sum of the squared vertical distances between the height of the child ($Y_i$) and the points on the fitted line ($\beta_1 X_i$). __NOTE__ that the equation is squared because points above the line are positive AND points below the line are negative. So sqauring them wil always result in a positive number. For example, $-2^2 = \left(-2\right) * \left(-2\right)$ and a negative times a negative is always a positive. 
+
+## Results
 
 \newpage
 
