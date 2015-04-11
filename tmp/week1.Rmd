@@ -263,6 +263,50 @@ $$\sum_{i=1}^n \{Y_i - \left(\beta_0 + \beta_1 X_i\right)\}^2$$
 
 The basic idea of the equation is that we want to minimize the sum of the squared vertical distances between the height of the child ($Y_i$) and the points on the fitted line ($\beta_1 X_i$). __NOTE__ that the equation is squared because points above the line are positive AND points below the line are negative. So sqauring them wil always result in a positive number. For example, $-2^2 = \left(-2\right) * \left(-2\right)$ and a negative times a negative is always a positive. 
 
+## Revisiting Galton's data
+
+So what is the answer when performing this model fit to Galton's data?
+
+### Double check the calculations using R
+
+The following `R` code confirms the above mentioned equations with the buit-in regression function, `lm()`.
+
+```{r calculations, echo = TRUE}
+#Simply the variables by naming the x and y variables as per the equation
+y <- galton$child
+x <- galton$parent
+
+#Create the beta variables for the equation
+beta1 <- cor(y, x) *  sd(y) / sd(x)
+beta0 <- mean(y) - beta1 * mean(x)
+
+#View these parameters compared to `lm()`
+z <- rbind(c(beta0, beta1), coef(lm(y ~ x)))
+row.names(z) <- c("Equation", "lm()")
+```
+
+When we manually calculate the equation and extract the the coefficients from the `lm()` function, we get the same results.
+
+```{r, echo = FALSE}
+#Print results
+z
+```
+
+__So the foumula holds. (See Appendix C for further notes)__
+
+### Adding the regression line
+
+Now that we have confirmned that the calculations are correct, we can apply the fit to the scatterplot by adding `g <- g + geom_smooth(method="lm", formula=y~x)` to the `ggplot` object. The final plot is as follows:
+
+```{r final, echo = FALSE}
+#add the linear model to `g`
+g <- g + geom_smooth(method="lm", formula=y~x)
+g
+
+```
+
+__NOTE:__ `ggplot()` automatically proveds a confidence interval for the regression line to show statistical uncertainty. 
+
 \newpage
 
 #Appendix A: Mathematical Proof for Least Squares
@@ -320,11 +364,9 @@ myPlot <- function(beta){
 \newpage
 
 
-## The Results 
+# Appendix C: Additional Notes
 
-So what is the answer when performing this model fit?
-
-To reiterate, we want the line ($Y = \beta_0 + \beta_1 X$) that is fit through a scatterplot of point $\left(X_i, Y_i\right)$ where $Y_i$ is the outcome. We put little hats opn $\beta_0$ and $\beta_1$ to indicate the estimated values, $Y = \hat \beta_0 + \hat \beta_1 X$. The solutions works out to be:
+The following is a list of things to keep in mind regarding the Least Squares calculation.To reiterate, we want the line ($Y = \beta_0 + \beta_1 X$) that is fit through a scatterplot of point $\left(X_i, Y_i\right)$ where $Y_i$ is the outcome. We put little hats opn $\beta_0$ and $\beta_1$ to indicate the estimated values, $Y = \hat \beta_0 + \hat \beta_1 X$. The solutions works out to be:
 
 $$\hat \beta_1 = Cor(Y, X) \frac{Sd(Y)}{Sd(X)} ~~~ \hat \beta_0 = \bar Y - \hat \beta_1 \bar X$$
 
@@ -338,6 +380,37 @@ So whtat are the consequences of this being the result?
 
 3. If we reverse the role of $Y$ and $X$ and treat $X$ as the outcome and $Y$ as the predictor, then we simply get the answer that the slope of this particular line is $Cor\left(Y, X\right)$ times the standard deviation of $X$ divided by the standard deviation of $Y$. This ia a totally differnt answer when $X$ is the outcome.
 
-4. If center the data first, the slope would still be the same. In other words, take each $X_i$ and subtract of it's average as well as take each $Y_i$ and subtract of it's average so that now the origin is eactly the nean of the data. Performing regression and fircing the line through the origin, we get the same answer.
+```{r reverse, echo = FALSE}
+beta1 <- cor(y, x) *  sd(x) / sd(y)
+beta0 <- mean(x) - beta1 * mean(y)
+z <- rbind(c(beta0, beta1), coef(lm(x ~ y)))
+rownames(z) <- c("Equation", "lm()")
+z
+```
 
-5. If we normalize the data - both center and scale it - the slope is exactly the correlation.
+4. If center the data first, the slope would still be the same. In other words, take each $X_i$ and subtract off it's average or mean, as well as take each $Y_i$ and subtract of it's average or mean, so that now the origin is eactly the mean of the data. $(X_i - \bar X, Y_i - \bar Y)$. Performing regression and forcing the line through the origin, we get the same answer.
+
+```{r center, echo = TRUE}
+yc <- y - mean(y) #Subtract off the mean of each y
+xc <- x - mean(x) #Subtract off the mean of each x
+
+#regression through the origin for the slope equations
+beta1 <- sum(yc * xc) / sum(xc ^ 2)
+c(beta1, coef(lm(y ~ x))[2]) #get the second coefficient from lm, the slope
+
+#Alternative is to use lm() but subtract out the intercept
+lm(yc ~ xc -1)
+```
+
+5. If we normalize the data - both center and scale it - the slope is exactly the correlation. $$\{ \frac{X_i - \bar X}{Sd(X)}, \frac{Y_i - \bar Y}{Sd(Y)}\} = Cor(Y, X)$$
+
+```{r normalize, echo = TRUE}
+#Normalize the Child and parent data so that they are in standard deviations,
+#not incles 
+yn <- (y - mean(y))/sd(y)
+xn <- (x - mean(x))/sd(x)
+
+#Show that the corealtin of the origional (y,x); the corealtion of the 
+#normalized data and the lm() coefficient 
+c(cor(y, x), cor(yn, xn), coef(lm(yn ~ xn))[2])
+```
