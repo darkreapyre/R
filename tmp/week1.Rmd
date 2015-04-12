@@ -10,13 +10,21 @@ output:
     geometry: margin=1in
 ---
 
+````{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE, results='hide', error=FALSE}
+# make this an external chunk that can be included in any file
+library(knitr)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+```
+
+
 \newpage
 
 # Introduction
 
 ## Background 
 
-Data first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpret able models.
+The concept was first used by Francis Galton, who created the terms __Regression__ and __Correlation__ in 1885. And by making use of __Rgression__, we are provided with very interpret able models. These notes will use the data that Galton originally used as can be seen from the plot below:
 
 ```{r galton, echo = TRUE}
 require(UsingR)
@@ -307,9 +315,47 @@ g
 
 __NOTE:__ `ggplot()` automatically proveds a confidence interval for the regression line to show statistical uncertainty. 
 
+# Regression toward the mean 
+
+## Background
+
+According to Wikiedia[^wikipedia], in statistics, regression toward (or to) the mean is the phenomenon that if a variable is extreme on its first measurement, it will tend to be closer to the average on its second measurement-and, paradoxically, if it is extreme on its second measurement, it will tend to have been closer to the average on its first.To avoid making incorrect inferences, regression toward the mean must be considered when designing scientific experiments and interpreting data. Basically, Regression to the mean (RTM) phenomenon can make natural variation in repeated data look like real change. It happens when unusually large or small measurements tend to be followed by measurements that are closer to the mean.
+
+It is importnato to note that RTM[^RTM] is a ubiquitous phenomenon in repeated data and should always be considered as a possible cause of an observed change. Its effect can be alleviated through better study design and use of suitable statistical methods.
+
+Another way to think of this is the extreme case where it's $100\%$ RTM. To do this we simulated pair of random normals $\left(x, y\right)$:
+
+```{r rtm, echo = TRUE}
+#Simulate a pair of 100 standard normals that are completely independent
+x <- rnorm(100)
+y <- rnorm(100)
+
+#Take the largest x
+ord <- order(x)
+largest_x <- x[ord[100]] #Maximum/last x
+largest_y <- y[ord[100]] #The y paired with the largest x
+
+```
+
+The largest first ones would be the largest by chance (e.g. x =`r largest_x`), and the probability that there are smaller for the second simulation is high (e.g. y = `r largest_y`).
+
+ * In other words the probaility $P(Y < x | X = x)$ gets bigger as $x$ heads into the very large values.
+ * Similarly the probability $P(Y > x | X = x)$ gets bigger as $x$ heads to very small values.
+
+This is the "extreme" version of RTM where there is $100\%$ RTM, however in most cases, there is a blend of some of the intrinsic components and the noise. Think of the regression line as the intrisic part. Unless $Cor(Y, X) = 1$, so the intrinsic part isn't perfect. 
+
+## Application to Galton's data
+
+How did Fancis Galton apply the idea regression and correlation to quantify RTM? To answer this question we look at the following example:
+
+* Suppose that we normalize $X$ (child's height) and $Y$ (parent's height) so that they both have mean 0 and variance 1. 
+* Then, recall, our regression line passes through $(0, 0)$ (the mean of the X and Y).
+* If the slope of the regression line is $Cor(Y,X)$, regardless of which variable is the outcome (recall, both standard deviations are 1).
+* Notice if $X$ is the outcome and you create a plot where $X$ is the horizontal axis, the slope of the least squares line that you plot is $1/Cor(Y, X)$. 
+
 \newpage
 
-#Appendix A: Mathematical Proof for Least Squares
+# Appendix A: Mathematical Proof for Least Squares
 
 $$
  \begin{aligned}
@@ -363,7 +409,6 @@ myPlot <- function(beta){
 
 \newpage
 
-
 # Appendix C: Additional Notes
 
 The following is a list of things to keep in mind regarding the Least Squares calculation.To reiterate, we want the line ($Y = \beta_0 + \beta_1 X$) that is fit through a scatterplot of point $\left(X_i, Y_i\right)$ where $Y_i$ is the outcome. We put little hats opn $\beta_0$ and $\beta_1$ to indicate the estimated values, $Y = \hat \beta_0 + \hat \beta_1 X$. The solutions works out to be:
@@ -414,3 +459,6 @@ xn <- (x - mean(x))/sd(x)
 #normalized data and the lm() coefficient 
 c(cor(y, x), cor(yn, xn), coef(lm(yn ~ xn))[2])
 ```
+
+[^wikipedia]: http://en.wikipedia.org/wiki/Regression_toward_the_mean
+[^RTM]: http://ije.oxfordjournals.org/content/34/1/215.full.pdf+html
