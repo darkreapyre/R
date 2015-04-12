@@ -17,7 +17,6 @@ options(width = 100)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 ```
 
-
 \newpage
 
 # Introduction
@@ -148,18 +147,18 @@ The rest of this document will show __how__ to the solution automatically and al
 
 $$\bar X = \frac{1}{n}\sum_{i=1}^n X_i$$
 
-(The sample mean is ususally denoted by a letter with a "bar" over it, in this case $\bar X$ is the sample mean of the collection of $X$'s. This is eualy to $\frac{1}{b}$ multiplied by all the $X$'s.)
+(The sample mean is usually denoted by a letter with a "bar" over it, in this case $\bar X$ is the sample mean of the collection of $X$'s. This is equal to $\frac{1}{b}$ multiplied by all the $X$'s.)
 
 
-2. If we subtract the mean form every data point, then the result is a new data set with $n$ observations, but the new data set has the mean of $0$. So notationlly if we define:
+2. If we subtract the mean form every data point, then the result is a new data set with $n$ observations, but the new data set has the mean of $0$. So the notation is defined as:
 
 $$\tilde X_i=X_i-\bar X_i$$
 
-(Each $X_i$ subtracing off the mean ($\bar X$), the the new data set ($\tilde X_i$) have a mean $0$.)
+(Each $X_i$ subtracting off the mean ($\bar X$), the the new data set ($\tilde X_i$) have a mean $0$.)
 
-3. This process is refered to as __"centering"__ random variables. which can be proved empiricaly by generating random vectoirs, subtracting the mean from each element of the vector and taking the mean of the new vector, which will always be $0$.
+3. This process is refereed to as __"centering"__ random variables. which can be proved empirically by generating random vectors, subtracting the mean from each element of the vector and taking the mean of the new vector, which will always be $0$.
 
-4. Recall from the outset that the sample mean is the __least squares__ solution. So to find tha value of $\mu$ that minimizes the following equation, then that $\mu$ works out to be $\bar X$.
+4. Recall from the outset that the sample mean is the __least squares__ solution. So to find the value of $\mu$ that minimizes the following equation, then that $\mu$ works out to be $\bar X$.
 
 $$\sum_{i=1}^n\left(\bar X_i - \mu\right)^2$$
 
@@ -174,15 +173,15 @@ $$
  \end{aligned}
 $$
 
-(The avergae squared deviation of the obersavation around the mean.)
+(The average squared deviation of the observations around the mean.)
 
-2. The empirircal standard deviation is simply the square root of the variace.:
+2. The empirical standard deviation is simply the square root of the variance.:
 
 $$S = \sqrt S^2$$
 
-(Standard deviations are good to work with as the vriance is expressded in whaatever units $X$ has but squared, wheras the standard deviation is expressed int he normal units of $X$.)
+(Standard deviations are good to work with as the variance is expressed in whatever units $X$ has but squared, whereas the standard deviation is expressed int he normal units of $X$.)
 
-3. Similar to __"centering"__, where we subtract the mean from every observation to produce a resulting data set of mean $0$. If we divide every obersation by the standard deviation ($\frac{X_i}{S}$), the resulting data set will have a standard of $1$. This is refered to as __"scaling"__ the data.
+3. Similar to __"centering"__, where we subtract the mean from every observation to produce a resulting data set of mean $0$. If we divide every observation by the standard deviation ($\frac{X_i}{S}$), the resulting data set will have a standard of $1$. This is refereed to as __"scaling"__ the data.
 
 ## Example 3: Normalization
 
@@ -192,19 +191,19 @@ $$Z_i = \frac{X_i - \bar X}{S}$$
 
 2. This process of __"centering"__ and then __"scaling"__ is called __"normalizing"__ the data.
 
-3. Normailzed data is centered at $0$ and have units equal to standard deviations away from the mean. For example, a value of $2$ from nomraized means that that data point was two stndard deviations larger then the mean.
+3. Normalized data is centered at $0$ and have units equal to standard deviations away from the mean. For example, a value of $2$ from randomized means that that data point was two standard deviations larger then the mean.
 
-4. As the name suggests, normalization is an attewmpt to make otherwise non-comparbale ata sets comparable.
+4. As the name suggests, normalization is an attempt to make otherwise non-comparable data sets comparable.
 
 ## Example 4: Finding the empirical covariance (correlation)
 
-1. Empirical covariance is the most central quantity in regression.
+1. Empirical co-variance is the most central quantity in regression.
 
 2. Consider two vectors $\left(X_i, Y_i\right)$ that are lined-up. So $X_1$ might be the __BMI__ for subject $1$ and $Y_1$ might be the __BLood Pressure__ for subject $1$. $X_2$ might be the __BMI__ for subject $2$ and $Y_2$ might be the __BLood Pressure__ for subject $2$ etc. 
 
-3. This data wil allow us to create a meaning scatterplot.
+3. This data will allow us to create a meaning scatter-plot.
 
-4. Based on this, we can define the covariance as follows:
+4. Based on this, we can define the co-variance as follows:
 
 $$
  \begin{aligned}
@@ -214,19 +213,19 @@ $$
  \end{aligned}
 $$
 
-(Basically the Summation of the $X$ deviations from their mean multiplied by the $Y$ deviations from their mean, over $n$)
+__(Basically the Summation of the $X$ deviations from their mean multiplied by the $Y$ deviations from their mean, over $n$)__
 
-5. The correlation is simply the covariance standardized into a unitless quantity:
+5. The correlation is simply the co-variance standardized into a unit-less quantity:
 
 $$Cor\left(X, Y\right) = \frac{Cov\left(X, Y\right)}{S_x S_y}$$
 
-(The correlation is the covariance of $X$ and $Y$, which has units of $X$ times uits of $Y$. Then we divide by the standard deviation of $x$ and the standard deviation of $y$. So we get a unit free quantity.)
+__(Basically, the correlation is the co-variance of $X$ and $Y$, which has units of $X$ times units of $Y$. Then we divide by the standard deviation of $x$ and the standard deviation of $y$. So we get a unit free quantity.)__
 
-6. Basically, $S_x$ and $S_y$ are the esitmated of the standard deviations from the $X$ observations and the $Y$ observations respectivley.
+6. In other words, $S_x$ and $S_y$ are the estimated of the standard deviations from the $X$ observations and the $Y$ observations respectively.
 
 ## Basic facts about correlation
 
-1. The correlation of $X$ and $Y$ is equal to the corelation of $Y$ and $X$:
+1. The correlation of $X$ and $Y$ is equal to the correlation of $Y$ and $X$:
 
 $$Cor\left(X, Y\right) = Cor\left(Y, X\right)$$
 
@@ -234,17 +233,17 @@ $$Cor\left(X, Y\right) = Cor\left(Y, X\right)$$
 
 $$-1 \leq Cor\left(X, Y\right) \leq 1$$
 
-3. Correlation will only achieve these bounds of $Cor\left(X, Y\right) = 1$ and $Cor\left(X, Y\right) = -1$ when the $X$ and $Y$ observations fall perfectly on a positivley or negatively sloped line i.e. a positive line for a corellation of $1$ and negative line for a correaltion of $-1$.
+3. Correlation will only achieve these bounds of $Cor\left(X, Y\right) = 1$ and $Cor\left(X, Y\right) = -1$ when the $X$ and $Y$ observations fall perfectly on a positively or negatively sloped line i.e. a positive line for a correlation of $1$ and negative line for a correlation of $-1$.
 
-4. Correlation meansures the strength of the linear realtionship between $X$ and $Y$ and is __central__ to __Linear Regression__. We estimate a stronger realtionship, the closer the correlation is to the extemes of $-1$ or $+1$.
+4. Correlation measures the strength of the linear relationship between $X$ and $Y$ and is __central__ to __Linear Regression__. We estimate a stronger relationship, the closer the correlation is to the extremes of $-1$ or $+1$.
 
-5. A corelation of $0$ implies no linear realtionship:
+5. A correlation of $0$ implies no linear relationship:
 
 $$Cor\left(X, Y\right) = 0$$
 
 # Least squares estimation of regression lines 
 
-Now that there is an understanding of some fo the basic definiations and notation used, consider again the parent and child height data from the Galton data.
+Now that there is an understanding of some of the basic definitions and notation used, consider again the parent and child height data from the Galton data.
 
 ```{r recap, echo=TRUE}
 freqData <- as.data.frame(table(galton$child, galton$parent))
@@ -259,17 +258,17 @@ g <- g + scale_colour_gradient(low = "lightblue", high="white")
 g
 ```
 
-Recall from the above scatterplot that the size of the circle represents the freqyancy of the particular $\left(X, Y\right)$ combination. Based on this we want to use the Parent's Height to _explain__ the Child's Height using Linear Regression.
+Recall from the above scatter-plot that the size of the circle represents the frequency of the particular $\left(X, Y\right)$ combination. Based on this we want to use the Parent's Height to _explain__ the Child's Height using Linear Regression.
 
 ## Fitting the best line
 
-To begin, let $Y_i$ be the $i^{th}$ child's height and let $X_i$ be the $i^{th}$ parent's heights. Note that this is the average over both of the parent's hights. So to find the line that fits' the __best__ line using the least sqaures. But we want the line to look like child's height times the __intercept__ ($\beta_0$) plus the parent'a height times the __slope__ ($\beta_1$).
+To begin, let $Y_i$ be the $i^{th}$ child's height and let $X_i$ be the $i^{th}$ parent's heights. Note that this is the average over both of the parent's heights. So to find the line that fits' the __best__ line using the least squares. But we want the line to look like child's height times the __intercept__ ($\beta_0$) plus the parent's height times the __slope__ ($\beta_1$).
 
-So $\beta_0$ and $\beta_1$ are parameters that we would like to know but corrently don't know and in order to find the  __"best"__ line that fits the data, we need a criteria, the least squares criteria:
+So $\beta_0$ and $\beta_1$ are parameters that we would like to know but currently don't know and in order to find the  __"best"__ line that fits the data, we need a criteria, the least squares criteria:
 
 $$\sum_{i=1}^n \{Y_i - \left(\beta_0 + \beta_1 X_i\right)\}^2$$
 
-The basic idea of the equation is that we want to minimize the sum of the squared vertical distances between the height of the child ($Y_i$) and the points on the fitted line ($\beta_1 X_i$). __NOTE__ that the equation is squared because points above the line are positive AND points below the line are negative. So sqauring them wil always result in a positive number. For example, $-2^2 = \left(-2\right) * \left(-2\right)$ and a negative times a negative is always a positive. 
+The basic idea of the equation is that we want to minimize the sum of the squared vertical distances between the height of the child ($Y_i$) and the points on the fitted line ($\beta_1 X_i$). __NOTE__ that the equation is squared because points above the line are positive AND points below the line are negative. So squaring them will always result in a positive number. For example, $-2^2 = \left(-2\right) * \left(-2\right)$ and a negative times a negative is always a positive. 
 
 ## Revisiting Galton's data
 
@@ -277,7 +276,7 @@ So what is the answer when performing this model fit to Galton's data?
 
 ### Double check the calculations using R
 
-The following `R` code confirms the above mentioned equations with the buit-in regression function, `lm()`.
+The following `R` code confirms the above mentioned equations with the built-in regression function, `lm()`.
 
 ```{r calculations, echo = TRUE}
 #Simply the variables by naming the x and y variables as per the equation
@@ -304,24 +303,24 @@ __So the foumula holds. (See Appendix C for further notes)__
 
 ### Adding the regression line
 
-Now that we have confirmned that the calculations are correct, we can apply the fit to the scatterplot by adding `g <- g + geom_smooth(method="lm", formula=y~x)` to the `ggplot` object. The final plot is as follows:
+Now that we have confirmed that the calculations are correct, we can apply the fit to the scatter-plot by adding `g <- g + geom_smooth(method="lm", formula=y~x)` to the `ggplot` object. The final plot is as follows:
 
 ```{r final, echo = FALSE}
 #add the linear model to `g`
-g <- g + geom_smooth(method="lm", formula=y~x)
+g <- g + geom_smooth(method="lm", formula=y~x, colour = "red")
 g
 
 ```
 
-__NOTE:__ `ggplot()` automatically proveds a confidence interval for the regression line to show statistical uncertainty. 
+__NOTE:__ `ggplot()` automatically provides a confidence interval for the regression line to show statistical uncertainty. 
 
 # Regression toward the mean 
 
 ## Background
 
-According to Wikiedia[^wikipedia], in statistics, regression toward (or to) the mean is the phenomenon that if a variable is extreme on its first measurement, it will tend to be closer to the average on its second measurement-and, paradoxically, if it is extreme on its second measurement, it will tend to have been closer to the average on its first.To avoid making incorrect inferences, regression toward the mean must be considered when designing scientific experiments and interpreting data. Basically, Regression to the mean (RTM) phenomenon can make natural variation in repeated data look like real change. It happens when unusually large or small measurements tend to be followed by measurements that are closer to the mean.
+According to Wikipedia[^wikipedia], in statistics, regression toward (or to) the mean is the phenomenon that if a variable is extreme on its first measurement, it will tend to be closer to the average on its second measurement-and, paradoxically, if it is extreme on its second measurement, it will tend to have been closer to the average on its first.To avoid making incorrect inferences, regression toward the mean must be considered when designing scientific experiments and interpreting data. Basically, Regression to the mean (RTM) phenomenon can make natural variation in repeated data look like real change. It happens when unusually large or small measurements tend to be followed by measurements that are closer to the mean.
 
-It is importnato to note that RTM[^RTM] is a ubiquitous phenomenon in repeated data and should always be considered as a possible cause of an observed change. Its effect can be alleviated through better study design and use of suitable statistical methods.
+It is important to note that RTM[^RTM] is a ubiquitous phenomenon in repeated data and should always be considered as a possible cause of an observed change. Its effect can be alleviated through better study design and use of suitable statistical methods.
 
 Another way to think of this is the extreme case where it's $100\%$ RTM. To do this we simulated pair of random normals $\left(x, y\right)$:
 
@@ -339,19 +338,80 @@ largest_y <- y[ord[100]] #The y paired with the largest x
 
 The largest first ones would be the largest by chance (e.g. x =`r largest_x`), and the probability that there are smaller for the second simulation is high (e.g. y = `r largest_y`).
 
- * In other words the probaility $P(Y < x | X = x)$ gets bigger as $x$ heads into the very large values.
+ * In other words the probability $P(Y < x | X = x)$ gets bigger as $x$ heads into the very large values.
  * Similarly the probability $P(Y > x | X = x)$ gets bigger as $x$ heads to very small values.
 
-This is the "extreme" version of RTM where there is $100\%$ RTM, however in most cases, there is a blend of some of the intrinsic components and the noise. Think of the regression line as the intrisic part. Unless $Cor(Y, X) = 1$, so the intrinsic part isn't perfect. 
+This is the "extreme" version of RTM where there is $100\%$ RTM, however in most cases, there is a blend of some of the intrinsic components and the noise. Think of the regression line as the intrinsic part. Unless $Cor(Y, X) = 1$, so the intrinsic part isn't perfect. 
 
-## Application to Galton's data
+## Application of RTM to Galton's data
 
-How did Fancis Galton apply the idea regression and correlation to quantify RTM? To answer this question we look at the following example:
+How did Francis Galton apply the idea regression and correlation to quantify RTM? To answer this question we look at the following example:
 
-* Suppose that we normalize $X$ (child's height) and $Y$ (parent's height) so that they both have mean 0 and variance 1. 
-* Then, recall, our regression line passes through $(0, 0)$ (the mean of the X and Y).
-* If the slope of the regression line is $Cor(Y,X)$, regardless of which variable is the outcome (recall, both standard deviations are 1).
-* Notice if $X$ is the outcome and you create a plot where $X$ is the horizontal axis, the slope of the least squares line that you plot is $1/Cor(Y, X)$. 
+* Suppose that we normalize $X$ (child's height) and $Y$ (parent's height).
+* The data set will a be a single parent data set where the parent's height will be that of the father.
+* The data has been normalized so that they have a mean $0$ and variance $1$.
+* Then, recall that because the data has been normalized, the regression line passes through $(0, 0)$ (the mean of the X and Y).
+* Therefore, regardless of which variable is the outcome (recall, both standard deviations are 1), the slope of the regression line is the correlation $Cor(Y,X)$.
+
+__NOTE:__ If $X$ is the outcome and the plot is created where $X$ is the horizontal axis, then the slope of the least squares line that is plotted is $1/Cor(Y, X)$.
+
+```{r application, echo = TRUE}
+#Load the data set. Sopecifically the father and son data set
+data(father.son)
+
+#Take son'e height as y and normaize
+y <- (father.son$sheight - mean(father.son$sheight)) / 
+        sd(father.son$sheight)
+
+#Take father's height as x and normalize
+x <- (father.son$fheight - mean(father.son$fheight)) /
+        sd(father.son$fheight)
+
+#(x, y) now have mean 0 and variance 1
+#Create rho to represent correlations
+rho <- cor(x, y)
+
+#Plot the data using ggplot
+g <- ggplot(data.frame(x = x, y = y), aes(x = x, y = y))
+g <- g + geom_point(size = 6, colour = "black", alpha = 0.2)
+g <- g + geom_point(size = 4, colour = "red", alpha = 0.2)
+#Create the axis to be between -4 and +4 for both axis
+g <- g + xlim(-4, 4) + ylim(-4, 4) #Good for a standardized variable
+#Add the identity line
+g <- g + geom_abline(position = "identity", colour = "purple")
+#OR
+#g <- g + geom_abline(intercept = 0, slope = 1)
+#Add the virtical axis line at 0
+g <- g + geom_vline(xintercept = 0)
+#add the horizontal axis line at 0
+g <- g + geom_hline(yintercept = 0)
+#Blue line for son's height at the outcome and father as the predeictor
+g <- g + geom_abline(intercept = 0, slope = rho, size = 2, colour = "blue")
+#Green line for father's height as the outcome and son's height as the predictor
+g <- g + geom_abline(intercept = 0, slope = 1 / rho, size = 2, colour = "green")
+g = g + xlab("Father's height, normalized")
+g = g + ylab("Son's height, normalized")
+g
+
+```
+
+How does RTM relate to the above plot?
+
+* If you had to predict a son's normalized height, it would be
+  $Cor(Y, X) * X_i$. 
+* If you had to predict a father's normalized height, it would be
+  $Cor(Y, X) * Y_i$. 
+* Multiplication by this correlation shrinks toward 0. (__regression toward the mean__).
+* Although RTM is a fundamental concept that lead to modern Regression as a whole, and it still has it's place when studying longitudinal data. (__think of the above plot as a topogrpahical map__)
+
+
+__SIDE NOTES__
+
+If the observations fell perfectly on a line, it would have to be, in this case the identity line (Purple Line).
+
+* This is because both the $x$ and the $y$ have been normalized.
+* So if the Father's height were $2$ (and there wasn't any noise), using the identity line, we can predict that the son's height would be $2$. __(Basically moving your finger up from 2 on the X-Axis until it hits the identity line)__
+* But since there is noise, the prediction falls at the blue line, where $y = x * Cor\left(x, y\right)$, which is __`r round(2 * rho)`__ if $x = 2$ in this case. __(Basically multiply the father's height of $2$ times the slope, which is the correlation, to get the child's height prediction from the blue line intercept, shich is $1$)__
 
 \newpage
 
@@ -411,19 +471,19 @@ myPlot <- function(beta){
 
 # Appendix C: Additional Notes
 
-The following is a list of things to keep in mind regarding the Least Squares calculation.To reiterate, we want the line ($Y = \beta_0 + \beta_1 X$) that is fit through a scatterplot of point $\left(X_i, Y_i\right)$ where $Y_i$ is the outcome. We put little hats opn $\beta_0$ and $\beta_1$ to indicate the estimated values, $Y = \hat \beta_0 + \hat \beta_1 X$. The solutions works out to be:
+The following is a list of things to keep in mind regarding the Least Squares calculation.To reiterate, we want the line ($Y = \beta_0 + \beta_1 X$) that is fit through a scatter-plot of point $\left(X_i, Y_i\right)$ where $Y_i$ is the outcome. We put little hats on $\beta_0$ and $\beta_1$ to indicate the estimated values, $Y = \hat \beta_0 + \hat \beta_1 X$. The solutions works out to be:
 
 $$\hat \beta_1 = Cor(Y, X) \frac{Sd(Y)}{Sd(X)} ~~~ \hat \beta_0 = \bar Y - \hat \beta_1 \bar X$$
 
 ($\hat \beta_1$ is the correlation between $Y$ and $X$ times the standard deviation of $Y$, divided by the standard deviation of $X$. The estimated intercept $\hat \beta_0$ is $\bar Y - \hat \beta_1$ times $\bar X$)
 
-So whtat are the consequences of this being the result?
+So what are the consequences of this being the result?
 
-1. $\hat \beta_1$ has the units of $Y$ divided by the units of $X$. $\hat \beta_0$ has the units of $Y$. This i sbecasue the correlation is aunitless quantity, the standart deviation of $Y$ has the units of $Y$ and the standard deviation fo $X$ has the units of $X$. So becuase the slop of a line is the change in $Y$ divided by the change in $X$, $\hat \beta_1$ has to have the units of $Y / X$ units. 
+1. $\hat \beta_1$ has the units of $Y$ divided by the units of $X$. $\hat \beta_0$ has the units of $Y$. This is because the correlation is a unit-less quantity, the standard deviation of $Y$ has the units of $Y$ and the standard deviation of $X$ has the units of $X$. So because the slop of a line is the change in $Y$ divided by the change in $X$, $\hat \beta_1$ has to have the units of $Y / X$ units. 
 
 2. The line always passes though the point $\left(\bar X, \bar Y\right)$.
 
-3. If we reverse the role of $Y$ and $X$ and treat $X$ as the outcome and $Y$ as the predictor, then we simply get the answer that the slope of this particular line is $Cor\left(Y, X\right)$ times the standard deviation of $X$ divided by the standard deviation of $Y$. This ia a totally differnt answer when $X$ is the outcome.
+3. If we reverse the role of $Y$ and $X$ and treat $X$ as the outcome and $Y$ as the predictor, then we simply get the answer that the slope of this particular line is $Cor\left(Y, X\right)$ times the standard deviation of $X$ divided by the standard deviation of $Y$. This is a totally different answer when $X$ is the outcome.
 
 ```{r reverse, echo = FALSE}
 beta1 <- cor(y, x) *  sd(x) / sd(y)
@@ -433,7 +493,7 @@ rownames(z) <- c("Equation", "lm()")
 z
 ```
 
-4. If center the data first, the slope would still be the same. In other words, take each $X_i$ and subtract off it's average or mean, as well as take each $Y_i$ and subtract of it's average or mean, so that now the origin is eactly the mean of the data. $(X_i - \bar X, Y_i - \bar Y)$. Performing regression and forcing the line through the origin, we get the same answer.
+4. If center the data first, the slope would still be the same. In other words, take each $X_i$ and subtract off it's average or mean, as well as take each $Y_i$ and subtract of it's average or mean, so that now the origin is exactly the mean of the data. $(X_i - \bar X, Y_i - \bar Y)$. Performing regression and forcing the line through the origin, we get the same answer.
 
 ```{r center, echo = TRUE}
 yc <- y - mean(y) #Subtract off the mean of each y
