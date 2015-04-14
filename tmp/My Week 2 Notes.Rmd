@@ -1,0 +1,56 @@
+---
+title: "My Week 2 Notes"
+author: "Trenton Potgieter"
+date: "Tuesday, April 14, 2015"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+```
+
+\newpage
+
+# Statistical Linear Regression Models
+
+## Overview
+
+Finding a simple Regression Model using __Least Squares__ is simply a mathematical proceedure. However we need to perform statistics, to draw __inferences__ on the data. 
+
+__We want to generalize, from our data, to a population byusing statistical models.__
+
+This is accomplished by using the probabilitic model for linear regression:
+
+$$Y_i = \beta_o + \beta_1 X_i + \epsilon_i$$
+
+1. The response ($Y_i$) is the line ($\beta_0 + \beta_1 X_i$), plus noise.
+  * $\beta_0$ and $\beta_1$ are unknown. 
+  * $\beta_0$ and $\beta_1$ are the population parameters wo estimate.
+  * $X_i$ is a known collection collection of explainitory variables.
+  * To make is a statistical model, we add __Gaussian iid__ errors ($\epsilon_i$).
+
+2. $\epsilon_i$ is assumed to be iid Normal $N\left(0, \sigma^2 \right)$.
+  * One can think of these errors as an accumulation of the variables that weren't part of the model, but still affect the response.
+
+3. Note that the Expected value of the response given a particular value of the regressor, is simply the line.
+  * $E\left[Y_i \mid X_i = x_i\right] = \beta_0 +\beta_1 x_i$
+  * Remember that $\beta_0 + \beta_1 x_i = \mu_i$.
+
+4. Note that the Variance of the response at a given value of the regressor, is $\sigma^2$.
+  * $Var\left(Y_i \mid X_i = x_i\right) = \sigma^2$
+  * This ios the Variance aroind the regressio line, no the Variance of the response.
+  * It will belower then the Variance of the response, due to the fact that some of the variation has been explained away by conditioning on $x_i$.
+
+5. Both the Expected Value and the VAriance are population quantioties that we would like to know.
+
+## Interpreting the Regression coefficients
+
