@@ -5,6 +5,7 @@ date: "Tuesday, April 14, 2015"
 output: 
     pdf_document:
         toc: true
+        fig_caption: true
         latex_engine: xelatex
     fontsize: 11pt
     geometry: margin=1in
@@ -13,6 +14,8 @@ output:
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
 # make this an external chunk that can be included in any file
 require(knitr)
+require(UsingR)
+require(ggplot2)
 options(width = 100)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 
@@ -32,7 +35,7 @@ This is accomplished by using the probabilitic model for linear regression:
 
 $$Y_i = \beta_o + \beta_1 X_i + \epsilon_i$$
 
-1. The response ($Y_i$) is the line ($\beta_0 + \beta_1 X_i$), plus noise.
+1. The response ($Y_i$) is the line ($\beta_0 + \beta_1 X_i$), plus the error term.
   * $\beta_0$ and $\beta_1$ are unknown. 
   * $\beta_0$ and $\beta_1$ are the population parameters wo estimate.
   * $X_i$ is a known collection collection of explainitory variables.
@@ -44,13 +47,238 @@ $$Y_i = \beta_o + \beta_1 X_i + \epsilon_i$$
 3. Note that the Expected value of the response given a particular value of the regressor, is simply the line.
   * $E\left[Y_i \mid X_i = x_i\right] = \beta_0 +\beta_1 x_i$
   * Remember that $\beta_0 + \beta_1 x_i = \mu_i$.
+  * The least squares estimate for $\mu_i$ is esactly the maximum likelihood estimate.
+  * Remember (from the Statistical Inference class) that the maximum likeligood estimates of $\beta_0$ and $\beta_1$ as the least squares estimates:
+  
+$$\hat \beta_1 = Cor\left(Y, X\right) \frac{Sd \left(Y\right)}{Sd \left(X\right)} ~~~ \hat \beta_0 = \hat Y - \hat \beta_1 \hat X$$
 
 4. Note that the Variance of the response at a given value of the regressor, is $\sigma^2$.
   * $Var\left(Y_i \mid X_i = x_i\right) = \sigma^2$
   * This ios the Variance aroind the regressio line, no the Variance of the response.
   * It will belower then the Variance of the response, due to the fact that some of the variation has been explained away by conditioning on $x_i$.
 
-5. Both the Expected Value and the VAriance are population quantioties that we would like to know.
+5. Both the Expected Value and the Variance are population quantioties that we would like to know.
 
-## Interpreting the Regression coefficients
+## Interpreting the Regression Coefficients
+
+Now that we have defines a formal statistical framework, we can interpret the regression coefficients with respect to the framework.
+
+1. $\beta_0$ is the expected value of the response when the predictor is $0$.
+2. $\beta_1$ is the expected change in the response per unit change in the predictor or regression variable.
+3. Shifting the regressor by a constant doesn't change the slope, however it does change the ingtercept. Shifting the regressor ($X$) values by a constant value ($\alpha$) changes the value of the intercept, but not the value of the slope.
+4. Often $\alpha$ is set to the the average $\hat X$, so that the intercept is interpretted as the expected value of the response at the average $X$ value.
+
+## Using Regression Coefficients for Prediction
+
+1. Basically we can get a prediction for $Y_i$ by taking $\hat \beta_0 + \hat \beta_1$ and multiplying it by the $X$ that we want to predict at:
+
+$$\hat Y\left(X\right) = \hat \beta_o + \hat \beta_1 X$$
+
+__NOTE:__ That the $\beta$ vlues have "hats" becuase they are the estimations, spcifically the __least squares__ estimation.
+
+2. For the fitted values or predictions, we simply plug in the observed $X$ values.
+
+$$\hat \mu_i = \hat Y = \hat \beta_0 + \hat \beta_1 X_i$$
+
+## Examples of Interpreting and Using the Regression Coefficients 
+
+To show this, we use the `diamond` data set from the `UsingR` package. The data shows diamond prices (in Singapore Dollars) and diamond wiehgt in carats (the standard measure of diamon mass, 0.2$g$). 
+
+```{r fit1, echo = TRUE}
+#Load the data
+attach(diamond)
+
+#Plot the data
+g = ggplot(diamond, aes(x = carat, y = price))
+g = g + xlab("Mass (carats)")
+g = g + ylab("Price (SING $)")
+g = g + geom_point(size = 5, colour = "black", alpha = 0.2)
+g = g + geom_point(size = 4, colour = "blue", alpha = 0.2)
+g = g + geom_smooth(method = "lm", colour = "red")
+g
+
+#Model Fit
+fit1 <- lm(price ~ carat)
+coef(fit1)
+
+```
+
+The above plot shows the fitted line, the line that minimizes the sqaured vertical distances between the $\left(X, Y\right)$ points and the line.  
+
+* From the regression variable (carat), we estimate an expected __`r round(coef(fit1)[2], 2)`__ (SING) dollar increase in price for every carat increase in mass of diamond.
+* The intercept __`r round(coef(fit1)[1], 2)`__ is the expected price of a $0$ carat diamond. This is not particularly interesting as we are not really interested in $0$ carat diamonds.
+* Therefore. the [Interpreting the Regression Coefficients][] section highlights that $\alpha$ is set to the average to __"mean center"__ the $X$ variable so that the intercept is on a more interpretable scale, shown below.
+
+```{r fit2, echo = TRUE}
+#Get a more interpretable intercept
+#Include arithmetic function inside the formula with I()
+fit2 <- lm(price ~ I(carat - mean(carat)))
+coef(fit2)
+
+```
+
+Notice that the slope (__`r round(coef(fit2)[2], 2)`__) remains the same, but the intercept is now  __`r round(coef(fit2)[2], 2)`__. Thus, __`r round(coef(fit2)[2], 2)`__ (SING) dollar is the expected average price for the average sized diamond (0.2042 carats according to the data source). 
+
+So how do we use this data? Imagine if someone came to us with three new diamonds with a value of $0.16$ carats, $0.27$ carats and $0.34$ carats. How could we use the fitted model to estimate the price? We could do this in two ways:
+
+1. We could to this manually by pluging the data into the equation $\beta_0 + \beta_1 X$.
+2. We could use the `predict()` function.
+
+```{r predict, fig.height = 7, fig.width = 6, echo = TRUE}
+#New diamonds
+new.x <- c(0.16, 0.27, 0.34)
+
+#Manual calculation
+coef(fit1)[1] + coef(fit1)[2] * new.x
+
+#predict() function with the new values of X for the carat variable
+predict(fit1, newdata = data.frame(carat = new.x))
+
+#Plot of what the prediction is actually accomplishing
+#Predicted values at the observed Xs (red) and at the new Xs (lines)
+plot(diamond$carat, diamond$price,  
+     xlab = "Mass (carats)", 
+     ylab = "Price (SIN $)", 
+     bg = "blue", 
+     col = "black", cex = 1.1, pch = 21,frame = FALSE)
+abline(fit1, lwd = 2)
+points(diamond$carat, predict(fit1), pch = 19, col = "red")
+lines(c(0.16, 0.16, 0.12), 
+      c(200, coef(fit1)[1] + coef(fit1)[2] * 0.16,
+      coef(fit1)[1] + coef(fit1)[2] * 0.16))
+lines(c(0.27, 0.27, 0.12), 
+      c(200, coef(fit1)[1] + coef(fit1)[2] * 0.27,
+        coef(fit1)[1] + coef(fit1)[2] * 0.27))
+lines(c(0.34, 0.34, 0.12), 
+      c(200, coef(fit1)[1] + coef(fit1)[2] * 0.34,
+        coef(fit1)[1] + coef(fit1)[2] * 0.34))
+text(new.x, rep(250, 3), labels = new.x, pos = 2)
+
+```
+
+\newpage
+
+# Residuals and Residual Variation
+
+## Overview
+
+The previous section discussed the regression model fit using __least squares__ regression. In reality, the model doesn't always fit the data perfectly. To this end we account for the errors, $\epsilon_i$. Thus the full model is:
+
+$$Y_i = \beta_0 + \beta_1 X_i + \epsilon_i$$
+
+It is important to note that we will never fully understand the exact error (thus clasified as noise), so we therefore estiamte the error. This is called the residual or $e_i$, where $e_i = Y_i - \hat Y_i$. Basically the resaidual is the __vertical__ distance between the observed data $Y_i$ and the estimated/predicted outcome $\hat Y_i$ which is on the regression line.
+
+__NOTE:__  
+
+$e_i$ IS NOT $\epsilon_i$. $\epsilon_i$ is the true error that we don't get to know because we don't even know if the model is $100\%$ correct. __It's an estimate of the error.__
+
+So we can think of __least squares__ as mimimizing the sum of the squared residuals:
+
+$$\sum_{i = 1}^n e_i^2$$
+
+## Properties of the Residuals  
+
+* Residuals are useful for investigating a poor model fit.
+* Residuals can be thought of as the outcome $\left(Y\right)$ with the __linear association__ of the predictor $\left(X\right)$ removed. The phrase that is often is used is the "$\left(Y\right)$ adjusted for $\left(X\right)$".
+* Positive residuals are above the line and negative residuals are below the line.
+* Residual plots highlight poor model fit in a way a scatter plot can't.
+
+## Examples of Residuals
+
+```{r residuals, echo = TRUE}
+#Define the X and Y Variables
+y <- diamond$price
+x <- diamond$carat
+n <- length(y)
+
+#Fit the model
+fit <- lm(y ~ x)
+
+#Define the residuals
+e <- resid(fit)
+
+#Predict the response of the fitted X's
+yhat <- predict(fit)
+
+#To demonstrate the resduals are wexactly the differnce between the observed
+#and fitted values by looking at the largest difference
+max(abs(e - (y - yhat)))
+
+#Compare the result to manually pluging in the values to the equation
+#$\hat \epsilon = Y - \hat \beta_0 - \hat \beta_1 X$
+max(abs(e - (y - coef(fit)[1] - coef(fit)[2] * x)))
+
+```
+
+__Residuals are the signed length of the red lines in the plot__
+
+```{r, fig.height = 6, echo = TRUE}
+#Plot the residuals
+plot(diamond$carat, diamond$price,  
+     xlab = "Mass (carats)", 
+     ylab = "Price (SIN $)", 
+     bg = "lightblue", 
+     col = "black", cex = 2, pch = 21,frame = FALSE)
+abline(fit, lwd = 2)
+for (i in 1 : n) 
+  lines(c(x[i], x[i]), c(y[i], yhat[i]), col = "red" , lwd = 2)
+
+```
+
+__Residual Plot__
+
+```{r, fig.height = 6, echo = TRUE}
+#Plot the residuals vs. X
+plot(x, e,  
+     xlab = "Mass (carats)", 
+     ylab = "Residuals (SIN $)", 
+     bg = "lightblue", 
+     col = "black", cex = 2, pch = 21,frame = FALSE)
+abline(h = 0, lwd = 2)
+for (i in 1 : n) 
+  lines(c(x[i], x[i]), c(e[i], 0), col = "red" , lwd = 2)
+
+```
+
+__Heteroskedasticity__
+
+A case where a model is not right because the variance isn't constant as a function of $X$.
+
+```{r, fig.height = 6, echo = TRUE}
+#Plot hetroskedasticity
+x <- runif(100, 0, 6); y <- x + rnorm(100,  mean = 0, sd = .001 * x); #The 
+#standard deviation of the normal actually depends on X
+g <- ggplot(data.frame(x = x, y = y), aes(x = x, y = y))
+g <- g + geom_smooth(method = "lm", colour = "black")
+g <- g + geom_point(size = 7, colour = "black", alpha = 0.4)
+g <- g + geom_point(size = 5, colour = "red", alpha = 0.4)
+g
+
+```
+
+The plot looks like a perfect regression model fit with no errors. But the following residual fit shows the hetroskedasticity.
+
+```{r, fig.height = 6, echo = TRUE}
+#Residual plot
+g <- ggplot(data.frame(x = x, y = resid(lm(y ~ x))), 
+           aes(x = x, y = y))
+g <- g + geom_hline(yintercept = 0, size = 2); 
+g <- g + geom_point(size = 7, colour = "black", alpha = 0.4)
+g <- g + geom_point(size = 5, colour = "red", alpha = 0.4)
+g <- g + xlab("X") + ylab("Residual")
+g
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
