@@ -185,6 +185,8 @@ $$\sum_{i = 1}^n e_i^2$$
 
 ## Examples of Residuals
 
+### Basic Residual Plot
+
 ```{r residuals, echo = TRUE}
 #Define the X and Y Variables
 y <- diamond$price
@@ -225,7 +227,7 @@ for (i in 1 : n)
 
 ```
 
-__Residual Plot__
+### Residual Plot
 
 ```{r, fig.height = 6, echo = TRUE}
 #Plot the residuals vs. X
@@ -240,7 +242,7 @@ for (i in 1 : n)
 
 ```
 
-__Heteroskedasticity__
+### Heteroskedasticity
 
 A case where a model is not right because the variance isn't constant as a function of $X$.
 
@@ -269,6 +271,326 @@ g <- g + xlab("X") + ylab("Residual")
 g
 
 ```
+
+## Estimating Residual Variation
+
+Residuals are useful for estimating residual variation. The __Maximum Likelehood Estimate__ (MLE) for the variation ($\sigma^2$) is the __average sqaured residual__:
+
+$$\frac{1}{n} \sum_{i=1}^n e_i^2$$
+
+However, for regression, most people use:
+
+$$\hat \sigma^2 = \frac{1}{n-2}\sum_{i = 1}^n e_i^2$$
+
+This is not the average (over $n$), but $n-2$ because the MLE is biased in this case and if we want the estimate to be unbiased - its' exapected value ($E\left[\hat \sigma^2\right]$) to actually be equal to $\sigma^2$ - then we have to subtract off $2$ (one degree of freedom for the intercept and one degree of freedom for the slope). And bevcause we have to estimate those two parameter, they get subtracted in essence. 
+
+__NOTE:__ This is exactly the same as Bessel's correction ($n-1$) to provide an unbiased estiamte for the population variance.
+
+## Residual Variation Examples
+
+```{r ressidualvar, echo = TRUE}
+#Create the x and y variables from the diamon data
+y <- diamond$price
+x <- diamond$carat
+n <- length(y)
+
+#Create the fit
+fit <- lm(y~x)
+
+#View the variance (sigma)
+summary(fit)$sigma
+
+#Manaually plug into the equation to for proof to get sigma
+sqrt(sum(resid(fit)^2) / (n - 2))
+
+```
+
+## Summarizing Variation
+
+$$
+\sum_{i=1}^n (Y_i - \bar Y)^2 
+= \sum_{i=1}^n (Y_i - \hat Y_i)^2 + \sum_{i=1}^n  (\hat Y_i - \bar Y)^2 
+$$
+
+__Where:__
+
+- The total variability in our response is the variability around an intercept
+(think mean only regression).
+
+$$\sum_{i=1}^n (Y_i - \bar Y)^2$$
+
+- The regression variability is the variability that is explained by adding the
+predictor.
+
+$$\sum_{i=1}^n  (\hat Y_i - \bar Y)^2$$
+
+- The error variability is what's leftover around the regression line.
+
+$$\sum_{i=1}^n (Y_i - \hat Y_i)^2$$
+
+__Therefore:__
+
+Total Variation = Residual Variation + Regression Variation
+
+So the percent of __Total Variation__ expalined by the model is:
+
+$$R^2 = \frac{\sum_{i=1}^n \left(\hat Y_i - \bar Y\right)^2}{\sum_{i=1}^n \left(Y_i - \bar Y\right)^2} = 1 - \frac{\sum_{i=1}^n \left(Y_i - \hat Y_i\right)^2}{\sum_{i=1}^n \left(Y_i - \bar Y\right)^2}$$
+
+R squared is the percentage of the total variability that is explained by the linear relationship with the predictor. See Appendix A for an explanation of the above equation.
+
+## Some facts about $R^2$
+
+- $R^2$ is the __percentage__ of variation explained by the regression model.
+- $0 \leq R^2 \leq 1$ = $R^2$ has to be between zero and one.
+- $R^2$ is the __sample__ correlation squared.
+- $R^2$ can be a misleading summary of model fit.
+    - Deleting data can inflate $R^2$.
+    - Adding terms (random noise) to a regression model always increases $R^2$. (Disccused later.)
+- Do `data(anscombe); example(anscombe)` below to see the following data.
+    - Basically same mean and variance of $X$ and $Y$.
+    - Identical correlations (hence same $R^2$ ).
+    - Same linear regression relationship.
+
+```{r, echo = FALSE, fig.height=5, fig.width=5, results='hide'}
+require(stats); require(graphics); data(anscombe)
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+  #print(anova(lmi))
+}
+
+## Now, do what you should have done in the first place: PLOTS
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "blue")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+par(op)
+```
+
+\newpage
+
+# Inference in Regression  
+
+## Review of Statistical Inference 
+
+(See Appendix B for additonal reference and recap)
+
+* Statistics like $\frac{\hat \theta - \theta}{\hat \sigma_{\hat \theta}}$ often have the following properties.
+    1. Is normally distributed and has a finite sample Student's T distribution if the  variance is replaced with a sample estimate (under normality assumptions).
+    2. Can be used to test $H_0 : \theta = \theta_0$ versus: 
+        * $H_a : \theta > \theta_0$
+        * $H_a : \theta < \theta_0$
+        * $H_a : \theta \neq \theta_0$.
+    3. Can be used to create a confidence interval for:
+    
+        $\theta$ via $\hat \theta \pm Q_{1-\alpha/2} \hat \sigma_{\hat \theta}$
+        
+        where $Q_{1-\alpha/2}$ is the relevant quantile from either a normal or T distribution.
+    
+* In the case of regression with iid sampling assumptions and normal errors, our inferences will follow
+very similarily to what you saw in your inference class.
+* We won't cover asymptotics for regression analysis, but suffice it to say that under assumptions 
+on the ways in which the $X$ values are collected, the iid sampling model, and mean model, 
+the normal results hold to create intervals and confidence intervals.
+
+## Applying Statistical Inference to Regression
+
+* $\sigma_{\hat \beta_1}^2 = Var(\hat \beta_1) = \sigma^2 / \sum_{i=1}^n (X_i - \bar X)^2$
+* $\sigma_{\hat \beta_0}^2 = Var(\hat \beta_0)  = \left(\frac{1}{n} + \frac{\bar X^2}{\sum_{i=1}^n (X_i - \bar X)^2 }\right)\sigma^2$
+* In practice, we don't actually know $\sigma$ so we replace it by its estimate.
+* It's probably not surprising that under iid Gaussian errors:
+$$
+\frac{\hat \beta_j - \beta_j}{\hat \sigma_{\hat \beta_j}}
+$$
+follows a $t$ distribution with $n-2$ degrees of freedom and a normal distribution for large $n$.
+
+* This can be used to create confidence intervals and perform hypothesis tests.
+
+## Example
+
+Usign the `diamond` data set, we can prove the above. 
+
+```{r test1, echo = TRUE}
+#Create the variables
+y <- diamond$price
+x <- diamond$carat
+n <- length(y)
+
+#Use lm() to get beta or manually define the equation 
+beta1 <- cor(y, x) * sd(y) / sd(x)
+beta0 <- mean(y) - beta1 * mean(x)
+
+#Define the residuals
+e <- y - beta0 - beta1 * x
+
+#Define the estimated residual variance
+sigma <- sqrt(sum(e^2) / (n-2))
+
+#Sum of the squared x's
+ssx <- sum((x - mean(x))^2)
+
+#Standard error for Beta0
+seBeta0 <- (1 / n + mean(x) ^ 2 / ssx) ^ .5 * sigma
+
+#STandard error for Beta 1
+seBeta1 <- sigma / sqrt(ssx)
+
+#Hypothesesis testing t-distribution for beta0 and beta1.
+#$H_0: \beta_0 = 0$ vs. $H_a: \beta_0 > < \neq 0$
+tBeta0 <- beta0 / seBeta0
+tBeta1 <- beta1 / seBeta1
+
+#Prability value for beta0 and beta1
+pBeta0 <- 2 * pt(abs(tBeta0), df = n - 2, lower.tail = FALSE)
+pBeta1 <- 2 * pt(abs(tBeta1), df = n - 2, lower.tail = FALSE)
+
+#Create a table of all the values
+coefTable <- rbind(c(beta0, seBeta0, tBeta0, pBeta0),
+                   c(beta1, seBeta1, tBeta1, pBeta1))
+colnames(coefTable) <- c("Estimate", "Std. Error", "t value", "P(>|t|)")
+rownames(coefTable) <- c("(Intercept)", "x")
+coefTable
+
+```
+
+Verify the above proof using the `lm()` function.
+
+```{r test2, echo = TRUE}
+#Fit the model
+fit <- lm(y~x)
+summary(fit)$coefficients
+
+```
+
+\newpage
+
+## Getting a Confidence Interval
+
+```{r CI, echo = TRUE}
+#Create a varbiable for the coefficients
+sumCoef <- summary(fit)$coefficients
+
+#Extract the relevant data for the confidence interval calculation
+sumCoef[1,1]+ c(-1, 1) * qt(.975, df = fit$df) * sumCoef[1, 2]
+
+#Confidence interval for beta1
+(sumCoef[2,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[2, 2]) / 10
+
+```
+
+So with __95%__ confidence, we estimate that a __0.1__ carat increase in diamond size results in a __`r round((sumCoef[2,1] - qt(.975, df = fit$df) * sumCoef[2, 2]) / 10, 1)`__ to __`r round((sumCoef[2,1] + qt(.975, df = fit$df) * sumCoef[2, 2]) / 10, 1)`__ increase in price in (Singapore) dollars.
+
+\newpage
+
+# Appendix A: $R^2$ Key
+
+- $Y_i$ = $i^th$ observation of $Y$
+- $\hat Y_i$ = Predicted value of the $i^th Y$
+- $n$ = Number of observations
+- $\bar Y$ = Empirical mean of $Y$
+- Total Variation = $\sum_{i=1}^n \left(\bar Y - Y_i\right)^2$
+- Residual Variation = $\sum_{i=1}^n \left(\hat Y_i - Y_i\right)^2$
+- Regression Variation = $\sum_{i=1}^n \left(\hat Y_i - \bar Y\right)^2$
+
+__Therefore:__
+
+$$R^2 = \frac{Regression Variation}{Total Variation} = 1 - \frac{Residual Variation}{Total VAriation}$$
+
+## How to derive R squared
+$$
+\begin{aligned}
+\sum_{i=1}^n (Y_i - \bar Y)^2 
+& = \sum_{i=1}^n (Y_i - \hat Y_i + \hat Y_i - \bar Y)^2 \\
+& = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + 
+2 \sum_{i=1}^n  (Y_i - \hat Y_i)(\hat Y_i - \bar Y) + 
+\sum_{i=1}^n  (\hat Y_i - \bar Y)^2 \\
+\end{aligned}
+$$
+
+****
+
+### Scratch work
+$(Y_i - \hat Y_i) = \{Y_i - (\bar Y - \hat \beta_1 \bar X) - \hat \beta_1 X_i\} = (Y_i - \bar Y) - \hat \beta_1 (X_i - \bar X)$
+
+$(\hat Y_i - \bar Y) = (\bar Y - \hat \beta_1 \bar X - \hat \beta_1 X_i - \bar Y )
+= \hat \beta_1  (X_i - \bar X)$
+
+$\sum_{i=1}^n  (Y_i - \hat Y_i)(\hat Y_i - \bar Y) 
+= \sum_{i=1}^n  \{(Y_i - \bar Y) - \hat \beta_1 (X_i - \bar X))\}\{\hat \beta_1  (X_i - \bar X)\}$
+
+$=\hat \beta_1 \sum_{i=1}^n (Y_i - \bar Y)(X_i - \bar X) -\hat\beta_1^2\sum_{i=1}^n (X_i - \bar X)^2$
+
+$= \hat \beta_1^2 \sum_{i=1}^n (X_i - \bar X)^2-\hat\beta_1^2\sum_{i=1}^n (X_i - \bar X)^2 = 0$
+
+## The relation between R squared and r
+
+Recall that $(\hat Y_i - \bar Y) = \hat \beta_1  (X_i - \bar X)$
+so that
+$$
+R^2 = \frac{\sum_{i=1}^n  (\hat Y_i - \bar Y)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2}
+= \hat \beta_1^2  \frac{\sum_{i=1}^n(X_i - \bar X)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2}
+= Cor(Y, X)^2
+$$
+Since, recall, 
+$$
+\hat \beta_1 = Cor(Y, X)\frac{Sd(Y)}{Sd(X)}
+$$
+
+__So, $R^2$ is literally $r$ squared.__
+
+\newpage
+
+# Appendix B: Fitted Value Summation
+
+## The model 
+
+$$
+Y_i = \beta_0 + \beta_1 X_i + \epsilon_i
+$$
+
+* $\epsilon \sim N(0, \sigma^2)$. 
+* We assume that the true model is known (correct). 
+* $\hat \beta_0 = \bar Y - \hat \beta_1 \bar X$ 
+* $\hat \beta_1 = Cor(Y, X) \frac{Sd(Y)}{Sd(X)}$. 
+
+## Standard Errors (conditioned on $X$)
+
+$$
+  \begin{aligned}
+  Var \left(\hat \beta_1\right) \
+  & = Var\left(\frac{\sum_{i=1}^n \left(Y_i - \bar Y\right) \left(X_i - \bar X\right)}{\sum_{i=1}^n \left(X_i - \bar X\right)^2}\right) \\
+  & = \frac{Var\left(\sum_{i=1}^n Y_i \left(X_i - \bar X\right)\right)}{\left(\sum_{i=1}^n \left(X_i - \bar X\right)^2 \right)^2} \\
+  & = \frac{\sum_{i=1}^n \sigma^2 \left(X_i - \bar X\right)^2}{\left(\sum_{i=1}^n \left(X_i - \bar X\right)^2 \right)^2} \\
+  & = \frac{\sigma^2}{\sum_{i=1}^n \left(X_i - \bar X\right)^2} \
+  \end{aligned}
+$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
