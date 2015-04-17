@@ -1,0 +1,182 @@
+---
+title: "My Week 2 Quiz Notes"
+author: "Trenton Potgieter"
+date: "Thursday, April 16, 2015"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+```
+
+\newpage
+
+# Question 1  
+
+Consider the following data with x as the predictor and y as as the outcome.
+
+```{r Q1a, echo = TRUE}
+x <- c(0.61, 0.93, 0.83, 0.35, 0.54, 0.16, 0.91, 0.62, 0.62)
+y <- c(0.67, 0.84, 0.6, 0.18, 0.85, 0.47, 1.1, 0.65, 0.36)
+
+```
+
+Give a P-value for the two sided hypothesis test of whether $\beta_1$ from a linear regression model is $0$ or not.
+
+## Explanation 
+
+* $\beta_1 = Cor\left(x, y\right) \cdot \frac{Sd_y}{Sd_x}$
+* $\sigma_{\hat \beta_1}^2 = Var\left(\hat \beta_1\right) = \frac{\sigma^2}{\sum_{i=1}^n \left(X_i - \bar X\right)^2}$
+* $\hat \sigma^2 = \frac{1}{n-2} \sum_{i=1}^n e_i^2$
+* $ssx = \sum_{i=1}^n \left(X_i - \bar X\right)^2$ (Sum of squared $x$'s)
+* $\hat \beta_0 = \hat Y - \hat \beta_1 \bar X$
+* $\rho = \frac{\mu - \mu:H_0}{\sigma}$
+
+```{r ans1, echo = TRUE}
+#Use already defined x and y
+n <- length(x)
+
+#Plugin in equations
+beta1 <- cor(x, y) * sd(y) / sd(x)
+beta0 <- mean(y) - beta1 * mean(x)
+ssx <- sum((x - mean(x))^2)
+yhat <- beta0 + beta1 * x
+e <- y - yhat
+sigma <- sqrt(sum(e^2) / (n-2))
+se_beta1 <- sqrt(sigma^2/ssx)
+
+fit1 <- lm(y ~ x)
+pred <- predict(fit1, data.frame(x))
+ans1 <- as.data.frame(summary(fit1)$coefficients)
+
+```
+
+## Answer: `r ans1[2, 4]`
+
+# Question 2 
+
+Consider the previous problem, give the estimate of the residual standard deviation.
+
+## Explaination
+
+The answer is $\sigma_{\hat \beta_1}^2 = Var\left(\hat \beta_1\right) = \frac{\sigma^2}{\sum_{i=1}^n \left(X_i - \bar X\right)^2}$
+
+## Answer: `r sigma`
+
+# Question 3 
+
+In the `mtcars` data set, fit a linear regression model of weight (predictor) on mpg (outcome). Get a 95% confidence interval for the expected mpg at the average weight. What is the lower endpoint?
+
+## Exaplanation
+
+```{r ans3, echo = TRUE}
+#Load the data set
+data(mtcars)
+x <- mtcars$wt
+y <- mtcars$mpg
+
+#Fit the model
+fit3 <- lm(y ~ x)
+newdata <- data.frame(x = mean(x))
+
+#Make the prediction and specify the interval as "confidence" for expected val
+ans3 <- as.data.frame(predict(fit3, newdata, interval = "confidence"))
+
+```
+
+## Answer: `r ans3$lwr`
+
+# Question 4
+
+Refer to the previous question. Read the help file for `mtcars`. What is the weight coefficient interpreted as?
+
+## Answer: The estimated expected change in mpg per 1,000 lb increase in weight.
+
+# Question 5
+
+Consider again the `mtcars` data set and a linear regression model with mpg as predicted by weight (1,000 lbs). A new car is coming weighing 3000 pounds. Construct a 95% __prediction interval__ for its mpg. What is the upper endpoint? 
+
+## Explanation
+
+```{r ans5, echo = TRUE}
+#Load the data set
+data(mtcars)
+x <- mtcars$wt
+y <- mtcars$mpg
+
+#Fit the model
+fit5 <- lm(y ~ x)
+newdata5 <- data.frame(x = 3000/1000)
+
+#Make the prediction and specify the interval as "prediction" for expected val
+ans5 <- as.data.frame(predict(fit5, newdata5, interval = "prediction"))
+
+```
+
+## Answer: `r ans5$upr`
+
+# Quesiton 6
+
+Consider again the `mtcars` data set and a linear regression model with mpg as predicted by weight (in 1,000 lbs). A "short" ton is defined as 2,000 lbs. Construct a 95% confidence interval for the expected change in mpg per 1 short ton increase in weight. Give the lower endpoint.
+
+## EXplanation
+
+```{r ans6, echo = TRUE}
+#Load the data set
+data(mtcars)
+x <- mtcars$wt
+y <- mtcars$mpg
+
+#Fit the model
+fit6 <- lm(y ~ I(x/2))
+tbl <- summary(fit6)$coefficients
+
+#mean is the estimated slope
+beta1 <- tbl[2,1]
+
+#Standard error
+se <-tbl[2,2]
+
+#degree of freedom
+df<-fit6$df
+
+#Two sides T-Tests
+ans6 <- beta1 + c(-1,1) * qt(0.975, df) * se
+
+```
+
+## Answer: `r ans6[1]`
+
+# Qauestion 10
+
+Do the residuals always have to sum to 0 in linear regression?
+
+## Explanation
+
+It is true that the residuals from a "general" regression analysis do not always sum to zero. However, for simple linear regression where the equation is $y = a + \*x + error$, the residuals from the fit of that model will sum to zero. The mathematical / statistical reasons behind when the residuals do and when they do not sum to zero can be summarized fairly easily as follows:
+
+1. If a regression model contains an intercept term that is estimated from the data, then the residuals will sum to zero; 
+
+OR
+
+2. If a regression model does not contain an intercept term, but could be reparameterized into an equivalent expression that DOES contain an intercept term, then the residuals will sum to zero. (It is not likely that this would come up in AP statistics, but certain kinds of analysis of variance models (beyond AP), have this property.)
+
+If neither #1 nor #2 above hold, then the residuals from the least squares fit will not necessarily sum to zero. An example of this, is problem #6 from the 2007 AP Exam, being discussed in other threads on the listserve concerning regression through the origin: if your model is y = 0 + b*x + error, that is if you "force" the regression line to go through the origin (0,0), then typically the residuals from the regression model fit will NOT sum to zero.
+
+All of this presupposes that the residuals are being calculated ON THE SAME scale in which the least squares fitting is happening. So for example if you are trying to fit a relationship between y and x and you decide to transform by taking logs of y first and then fit the model log(y) = a + b*x + error, then the residuals on the log scale, that is residual = log(y) - (a_hat + b_hat*x) will sum to zero. But if you back transform to get predicted y-values: y_hat = e^(a_hat + b_hat*x) and calculate the residuals on the "y scale", that is residual = y - e^(a_hat + b_hat*x), they won't necessarily sum to zero.
+
+
+
+
+
+
+

@@ -488,6 +488,88 @@ sumCoef[1,1]+ c(-1, 1) * qt(.975, df = fit$df) * sumCoef[1, 2]
 
 So with __95%__ confidence, we estimate that a __0.1__ carat increase in diamond size results in a __`r round((sumCoef[2,1] - qt(.975, df = fit$df) * sumCoef[2, 2]) / 10, 1)`__ to __`r round((sumCoef[2,1] + qt(.975, df = fit$df) * sumCoef[2, 2]) / 10, 1)`__ increase in price in (Singapore) dollars.
 
+## Prediction Intervals 
+
+* Consider predicting $Y$ at a value of $X$ in an inferential way. For example:
+    * Predicting the price of a diamond given the carat.
+    * Predicting the height of a child given the height of the parents.
+* The obvious estimate for prediction at point $x_0$ is: 
+$$
+\hat \beta_0 + \hat \beta_1 x_0
+$$
+* But if we want the prediction interval - __something that incorporates the uncertainty associated with the interval__ - a standard error is needed.
+* Knowledge of the distribution of the prediction estimate is also required to create the prefdiction interval.
+
+* There's a subtle distinction between intervals for the regression line at point $x_0$ and the prediction of what a $y$ would be at point $x_0$. (See the plot below). 
+* Line at $x_0$ standard error, $\hat \sigma\sqrt{\frac{1}{n} +  \frac{(x_0 - \bar X)^2}{\sum_{i=1}^n (X_i - \bar X)^2}}$ 
+* Prediction interval standard error at $x_0$, $\hat \sigma\sqrt{1 + \frac{1}{n} + \frac{(x_0 - \bar X)^2}{\sum_{i=1}^n (X_i - \bar X)^2}}$ 
+* The only thing that different really between the two equations is the $1$ to produce a wider interval for the prediction interval.
+
+```{r plot1, edcho = TRUE}
+#The following code plots the intervals using the equation
+#Plot the X and Y
+plot(x, y, frame = FALSE, xlab = "Carat", ylab = "(SING) Dollars", pch = 21,
+     col = "black", bg = "lightblue", cex = 2)
+
+#Add the fitted regression line
+abline(fit, lwd = 2, col = "red")
+
+#Create the X values that we wish to predict at
+xVals <- seq(min(x), max(x), by = .01)
+
+#Create the y values for the predictions
+yVals <- beta0 + beta1 * xVals
+
+#Create the two standard errors per the equations above
+se1 <- sigma * sqrt(1 / n + (xVals - mean(x))^2/(sum((x - mean(x))^2)))
+se2 <- sigma * sqrt(1 + 1 / n + (xVals - mean(x))^2/(sum((x - mean(x))^2)))
+
+#Plot the lines for the prediction intervals
+lines(xVals, yVals + 2 * se1, col = "blue")
+lines(xVals, yVals - 2 * se1, col = "blue")
+lines(xVals, yVals + 2 * se2, col = "green")
+lines(xVals, yVals - 2 * se1, col = "green")
+
+#The following code implements the intervals using R funcitons
+newx = data.frame(x = seq(min(x), max(x), length = 100))
+p1 = data.frame(predict(fit, newdata= newx,interval = ("confidence")))
+p2 = data.frame(predict(fit, newdata = newx,interval = ("prediction")))
+p1$interval = "Confidence"
+p2$interval = "Prediction"
+p1$x = newx$x
+p2$x = newx$x
+dat = rbind(p1, p2)
+names(dat)[1] = "y"
+
+g = ggplot(dat, aes(x = x, y = y))
+g = g + geom_ribbon(aes(ymin = lwr, ymax = upr, fill = interval), alpha = 0.2) 
+g = g + geom_line()
+g = g + geom_point(data = data.frame(x = x, y=y), aes(x = x, y = y), size = 4)
+g
+
+```
+
+## Key Points on Prediction Intervals
+
+* Both intervals have varying widths. 
+  * Least width at the mean of the $X$'s. 
+* We are quite confident in the regression line, so that interval is very narrow. 
+  * Or, if we knew $\beta_0$ and $\beta_1$ this interval would have zero width. 
+* The prediction interval must incorporate the variabilibity in the data around the line. 
+  * So, even if we knew $\beta_0$ and $\beta_1$ this interval would still have width. 
+
+\newpage
+
+# Multivariable Regression Analysis
+
+__Linear Regression is NOT equiped to handle more than one predictor__
+
+How can one generalize Simple Linear Regression to incoporate lots of regressors for the purpose of prediction? 
+
+* What are the consequences of adding lots of regressors?
+    * Surely there must be consequences to throwing variables in that aren't related to $Y$? 
+    * Surely there must be consequences to omitting variables that are?
+
 \newpage
 
 # Appendix A: $R^2$ Key
@@ -550,6 +632,11 @@ __So, $R^2$ is literally $r$ squared.__
 
 # Appendix B: Fitted Value Summation
 
+## Reminder
+
+* The sample estimate of any __population__ parameter puts a "hat" on the parameter. So if __$\beta$__ is the parameter then __$\hat \beta$__ is the estimate of that true parameter value. 
+* A Statistic and a Parameter are very similar. A Statistic describes a __Sample__, while a Parameter describes the __Population__.
+
 ## The model 
 
 $$
@@ -573,7 +660,7 @@ $$
   \end{aligned}
 $$
 
-
+__We want variability (spread) in the $X$'s because it decreases the varbiability on the slope ($\hat \beta_1$)__
 
 
 
