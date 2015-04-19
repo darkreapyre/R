@@ -5,15 +5,124 @@ date: "Saturday, April 18, 2015"
 output: 
     pdf_document:
         latex_engine: xelatex
-    fontsize: 11pt
+    fontsize: 10pt
     geometry: margin=1in
 ---
 
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
 # make this an external chunk that can be included in any file
 require(knitr)
+data(mtcars)
 #require(ggplot2)
 options(width = 100)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 
 ```
+
+# Executive Summary
+One of the key criteria in any vehicle purchasing decision is fuel economy, or how many Miles per Gallon (MPG). Added to this, there are various additional factors that need to be taken into consideration when assessing the effects on fuel-economy. Among these is the type of car transmission the vehicle is equipped with. Which of the two types of transmissions (__manual__ or __automatic__) impacts fuel economy more? 
+
+This report will answer this question by analyzing what impact each type of transmission has on fuel economy and furthermore, the report will quantify the impact of each on the respective Miles per Gallon (MPG). 
+
+# Data Processing 
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models). 
+
+## Initial Analysis
+```{r summaries, echo = TRUE}
+#Summaries
+str(mtcars)
+summary(mtcars)
+```
+
+As can be seen from the summaries above, the data is made up of __`r nrow(mtcars)`__ separate motor vehicles, with __` r ncol(mtcars)`__ different features. Since the focus of this report is on the MPG and Transmission type, there are __`r sum(mtcars$am == 0)`__ cars with __Automatic__ transmissions and __`r sum(mtcars$am == 1)`__ with __Manual__ transmissions. 
+
+```{r boxplot, echo = TRUE}
+#Box Plot
+mean_mpg <- as.list(round(tapply(mtcars$mpg, mtcars$am, mean), 2))
+par(mfrow = c(1, 2))
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 0),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "red",
+        main = "Automatic")
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 1),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "blue",
+        main = "Manual")
+```
+
+The above plot shows the distribution of the transmission types for the various vehicles and their respective MPG. As can be seen, the vehicles with a Manual transmission have an average of __`r mean_mpg[[2]]`__ MPG, while the vehicles with an Automatic transmission have an average of __`r mean_mpg[[1]]`__ MPG. It also seems that the vehicles with __4__ gears (whether Automatic or Manual) are more economical. Since there are other variables that can influence this conclusion (See [Appendix A: Pair-wise Plot][] for other highly correlated variables), the rest of this report will quantify these more. 
+
+## Data Transformations 
+There are no missing values or outliers within the data set, however there are a number of variables that have a number of categories. So to prepare the data for a better analysis, we factorize the variables into their individual categories and provide better names for the type of transmission. 
+
+```{r transformations, echo = TRUE}
+#Factorize the variables with catagories
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+levels(mtcars$am) <- c("Auto", "Man") #Rename Transmission Type
+mtcars$gear <- as.factor(mtcars$gear)
+mtcars$carb <- as.factor(mtcars$carb)
+```
+
+# Regression Analysis 
+Now that the data is neatened and factorized, we can run an initial regression analysis to get an idea of which of the variables have an effect on fuel economy. The first model to fit in the initial assumption that just the type of transmission affects fuel economy. 
+
+```{r fit, echo = TRUE}
+#Fit the model
+fit <- lm(mpg~am, data = mtcars)
+summary(fit)
+```
+
+As can be seen from the output above, the original assumption shows that the __Manual__ transmission type significantly influences the __MPG__. But as mentioned at the outset, what about the other variables? 
+
+## Model Selection
+To start the process of finding the best model we fit the linear regression model using all the variables as predictors. 
+
+```{r full, echo = TRUE}
+#Fit a regression model on ALL the data
+full_fit <- lm(mpg~., data = mtcars)
+
+#Show the highest corrleated coeficients
+summary(full_fit)
+```
+
+The above output shows the list of variables that have the most influence on fuel economy. When compared with the [Initial Analysis][] and initial model fit, we can now see the list of coefficients that have some impact on fuel economy, not just the type of transmission. Since the objective of this report is to determine the most significant factors that influence fuel economy. It is clear from the output that there are still too many variables, namely __`r dim(summary(full_fit)$coefficients)[1]-1`__. Therefore, it is prudent to find a better fitting model. To this end, we make use of the `step()`[^step] function in `R` to make use of a search algorithm[^aic] to find the best model. Automatic methods are useful when the number of explanatory variables is large and it is not feasible to fit all possible models. In this case we will use both a Forward selection as well as Backward elimination for model selection. 
+
+```{r best, echo = TRUE}
+#Find the best model using the step() funciton
+best_fit <- step(full_fit, direction = "both")
+
+#Show the coefficents of the best fit
+summary(best_fit)
+```
+
+The output shows that the coefficients that have the most impact on MPG. So by using automatic methods provides the best linear function. 
+
+## Results 
+The regression analysis shows the following significant information: 
+
+* The model used for the initial assumption produces an adjusted $R^2$ of __0.34__. 
+* The model used to fit all the variables as predictors produces an adjusted $R^2$ of __0.78__.
+* The best model determined using automatic methods produces as adjusted $R^2$ of __0.84__. This shows that it certainly doesn't have the highest influence on fuel economy. 
+
+# Conclusion 
+So not only does the __Manual__ transmission impact the fuel economy of a vehicle, but as this report shows, so does having __6__ and __8__ cylinders, the __horsepower__ and the __weight__. 
+
+\newpage
+
+# Appendix A: Pair-wise Plot 
+```{r pair, echo = TRUE}
+#Pair-wise plot
+pairs(mtcars, panel=panel.smooth, main="Pair-wise Plot")
+```
+
+****
+
+#Appendix B: Residual Plots
+```{r residual, echo = TRUE}
+#Plot the best fit
+par(mfrow = c(2,2))
+plot(best_fit)
+```
+
+[^step]: http://www.stat.columbia.edu/~martin/W2024/R10.pdf
+[^aic]: http://web.mit.edu/r_v3.0.1/lib/R/library/stats/html/step.html

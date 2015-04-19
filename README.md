@@ -3,5 +3,7 @@ This repository contains some sample of my musings with R and serves as a reposi
 * Initial Musings
 * Plotting
 * Analysis Reports
+    * Personal Acvtivity Monitor
+    * Severe Weather
 * Working with Regression
 * Working with the data.table package
