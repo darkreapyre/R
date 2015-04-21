@@ -1,0 +1,115 @@
+---
+title: "The Impact that the Type of Transmission has on Fuel Efficiency"
+author: "Trenton Potgieter"
+date: "Saturday, April 18, 2015"
+output: 
+    pdf_document:
+        latex_engine: xelatex
+    fontsize: 10pt
+    geometry: margin=1in
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+data(mtcars)
+#require(ggplot2)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+```
+
+## Executive Summary
+One of the key criteria in any vehicle purchasing decision is fuel economy, or how many Miles per Gallon (MPG) the vehicle gets. There are various additional factors that need to be taken into consideration when assessing the effects on fuel-economy. Among these is the type of car transmission the vehicle is equipped with. Which of the two types of transmissions (__manual__ or __automatic__) impacts fuel economy more? This report will answer this question by analyzing what impact each type of transmission has well as a multitude of other factors has Miles per Gallon (MPG). 
+
+## Initial Analysis and Data Transformations
+```{r hidden, echo = FALSE, results = 'hide'}
+#Summaries
+str(mtcars)
+summary(mtcars)
+mean_mpg <- as.list(round(tapply(mtcars$mpg, mtcars$am, mean), 2))
+
+#Factorize the variables with catagories
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+levels(mtcars$am) <- c("Auto", "Man") #Rename Transmission Type
+mtcars$gear <- as.factor(mtcars$gear)
+mtcars$carb <- as.factor(mtcars$carb)
+
+#Fit the model
+fit <- lm(mpg~am, data = mtcars)
+
+#Fit a regression model on ALL the data
+full_fit <- lm(mpg~., data = mtcars)
+
+#Find the best model using the step() funciton
+best_fit <- step(full_fit, direction = "both")
+
+```
+
+The data for this report comes from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models). The data is made up of __`r nrow(mtcars)`__ separate motor vehicles, with __`r ncol(mtcars)`__ different features. Since the focus of this report is on the MPG and Transmission type, there are __`r sum(mtcars$am == 0)`__ cars with __Automatic__ transmissions and __`r sum(mtcars$am == 1)`__ with __Manual__ transmissions. 
+
+The plot in [Appendix A: Box Plot][] shows the distribution of the transmission types for the various vehicles and their respective MPG. As can be seen, the vehicles with a Manual transmission have an average of __`r mean_mpg[[2]]`__ MPG, while the vehicles with an Automatic transmission have an average of __`r mean_mpg[[1]]`__ MPG. It also seems that the vehicles with __4__ gears (whether Automatic or Manual) are more economical. Since there are other variables that can influence this conclusion (See [Appendix B: Pair-wise Plot][] for other highly correlated variables), the rest of this report will quantify these more. Since there are no missing values or outliers within the data set, however there are a number of variables that have a number of categories. So to prepare the data for a better analysis, we factorize the variables into their individual categories and provide better names for the type of transmission. 
+
+## Regression Analysis and Model Selection
+Now that the data is neatened and factorized, we can run an initial regression analysis to get an idea of which of the variables have an effect on fuel economy. To start the process of finding the best model we fit the linear regression model using all the variables as predictors. 
+
+```{r full, echo = FALSE}
+#Show the highest corrleated coeficients
+summary(fit)
+```
+
+The above output shows the coefficients that have the most influence on fuel economy. Since the objective of this report is to determine the most significant factors that influence fuel economy. It is clear from the output that there are still too many variables, namely __`r dim(summary(full_fit)$coefficients)[1]-1`__. Therefore, it is prudent to find a better fitting model. To this end, we make use of the `step()`[^step] function in `R` to make use of a search algorithm[^aic] to find the best model. Automatic methods are useful when the number of explanatory variables is large and it is not feasible to fit all possible models. In this case we will use both a Forward selection as well as Backward elimination for model selection. 
+
+```{r summary, echo = FALSE}
+#Show the coefficents of the best fit
+summary(best_fit)
+```
+
+The output shows that the coefficients that have the most impact on MPG. So by using automatic methods provides the best linear function. 
+
+The regression analysis shows the following significant information: 
+
+* The model used to fit all the variables as predictors produces an adjusted $R^2$ of __0.78__.
+* The best model determined using automatic methods produces as adjusted $R^2$ of __0.84__.
+
+[Appendix C: Residual Plot][]
+
+
+## Conclusion 
+So not only does the __Manual__ transmission impact the fuel economy of a vehicle, but as this report shows, so does having __6__ and __8__ cylinders, the __horsepower__ and the __weight__. 
+
+****
+## Appendix A: Box Plot
+```{r boxplot, echo = FALSE, fig.height = 4, fig.width = 5}
+#Box Plot
+data(mtcars)
+par(mfrow = c(1, 2))
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 0),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "red",
+        main = "Automatic")
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 1),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "blue",
+        main = "Manual")
+```
+
+****
+
+## Appendix B: Pair-wise Plot 
+```{r pair, echo = FALSE, fig.height = 8, fig.width = 7}
+#Pair-wise plot
+pairs(mtcars, panel=panel.smooth, main="Pair-wise Plot")
+```
+
+****
+
+## Appendix C: Residual Plot
+```{r residual, echo = FALSE, fig.height = 8}
+#Rsediual Plot
+par(mfrow = c(2, 2))
+plot(best_fit)
+```
+
+[^step]: http://www.stat.columbia.edu/~martin/W2024/R10.pdf
+[^aic]: http://web.mit.edu/r_v3.0.1/lib/R/library/stats/html/step.html

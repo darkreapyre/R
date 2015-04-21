@@ -1,0 +1,121 @@
+---
+title: "The Impact that the Type of Transmission has on Fuel Efficiency"
+author: "Trenton Potgieter"
+date: "Saturday, April 18, 2015"
+output: 
+    pdf_document:
+        latex_engine: xelatex
+    fontsize: 10pt
+    geometry: margin=1in
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+require(car)
+data(mtcars)
+#require(ggplot2)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+```
+
+## Executive Summary
+One of the key criteria in any vehicle purchasing decision is fuel economy, or how many Miles per Gallon (MPG) the vehicle gets. There are various additional factors that need to be taken into consideration when assessing the effects on fuel-economy. Among these is the type of car transmission the vehicle is equipped with. Which of the two types of transmissions (__manual__ or __automatic__) impacts fuel economy more? This report will answer this question by analyzing what impact each type of transmission has well as a multitude of other factors has Miles per Gallon (MPG). 
+
+## Initial Analysis and Data Transformations
+```{r hidden, echo = FALSE, results = 'hide'}
+#Summaries
+str(mtcars)
+summary(mtcars)
+mean_mpg <- as.list(round(tapply(mtcars$mpg, mtcars$am, mean), 2))
+
+#Factorize the variables with catagories
+df <- as.data.frame(mtcars)
+df$cyl <- as.factor(df$cyl)
+df$vs <- as.factor(df$vs)
+df$am <- as.factor(df$am)
+levels(df$am) <- c("Auto", "Man") #Rename Transmission Type
+df$gear <- as.factor(df$gear)
+df$carb <- as.factor(df$carb)
+
+#Fit the model
+fit <- lm(mpg~am, data = df)
+
+#Fit a regression model on ALL the data
+full_fit <- lm(mpg~., data = df)
+
+#Find the best model using the step() funciton
+best_fit <- step(full_fit, direction = "both")
+
+```
+
+The data for this report comes from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models). The data is made up of __`r nrow(mtcars)`__ separate motor vehicles, with __`r ncol(mtcars)`__ different features. Since the focus of this report is on the MPG and Transmission type, there are __`r sum(mtcars$am == 0)`__ cars with __Automatic__ transmissions and __`r sum(mtcars$am == 1)`__ with __Manual__ transmissions. 
+
+The plot in [Appendix A: Box Plot][] shows the distribution of the transmission types for the various vehicles and their respective MPG. As can be seen, the vehicles with a Manual transmission have an average of __`r mean_mpg[[2]]`__ MPG, while the vehicles with an Automatic transmission have an lower average of __`r mean_mpg[[1]]`__ MPG. Since there are other variables that can influence this conclusion, the rest of this report will quantify these more. 
+
+Since there are no missing values or outliers within the data set, but there are a number of variables that have a number of categories. So to prepare the data for a better analysis, we factorize the variables into their individual categories and provide better names for the type of transmission. 
+
+## Regression Analysis and Model Selection
+We run an initial regression analysis to answer the original question of just how closely correlated the type of transmission is to MPG. 
+
+```{r full, echo = FALSE}
+#Show the highest corrleated coeficients
+summary(fit)
+```
+
+As can be seen there is a significant correlation between the __Manual__ transmission and __MPG__. But the adjusted $R^2$ is low (__0.34__) showing that the coefficient is not necessary the best predictor. To find a better fitting model, we make use of Step-wise Regression. The `step()`[^step] function in `R` makes use of a search algorithm[^aic] to find the best model. In this case we will use both a Forward selection as well as Backward elimination for model selection.] 
+
+```{r summary, echo = FALSE}
+#Show the coefficents of the best fit
+summary(best_fit)
+```
+
+The output shows the coefficients that have the most impact on MPG. Using automatic methods provides the best linear function, because the adjusted $R^2$ for the best model is much higher (__0.84__).
+
+Added to this is the fact that not only are the residuals randomly centered around $0$ throughout the range of fitted values (see [Appendix B: Residual Plot][]), but they are well within the $95\%$ confidence intervals of the plot, see [Appendix C: Q-Q Plot][]. To this end we can deduce that `cyl`, `hp`, `wt` and `am` are the best factors affecting `mpg`.
+
+## Conclusion 
+The data shows when making a decision to buy an economical vehicle, one should not only buy a vehicle with a __Manual__ transmission, but as this report shows, having __6__ or __8__ cylinders, the __Horsepower__ and the __Weight__ of the vehicle must be considered as well. 
+
+\newpage
+
+## Appendix A: Box Plot
+```{r boxplot, echo = FALSE, fig.height = 5, fig.width = 7}
+#Box Plot
+data(mtcars)
+par(mfrow = c(1, 2))
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 0),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "red",
+        main = "Automatic")
+boxplot(mtcars$mpg ~ mtcars$gear, subset = (mtcars$am == 1),
+        xlab = "Gears", ylab = "Miles per Gallon", col = "blue",
+        main = "Manual")
+```
+
+****
+
+## Appendix B: Residual Plot 
+```{r pair, echo = FALSE, fig.height = 8, fig.width = 6}
+#Resdiual Plot
+#par(mfrow = c(2, 2))
+#plot(best_fit)
+
+plot(fitted(best_fit), residuals(best_fit),
+  xlab = "Fitted Values", ylab = "Residuals", main = "Fitted vs. Residual", pch = 19)
+  abline(h=0, lty=2, col = "blue")
+  lines(smooth.spline(fitted(best_fit), residuals(best_fit)), col = "red")
+```
+
+****
+
+## Appendix C: Q-Q Plot 
+```{r residual, echo = FALSE, fig.height = 7, fig.width = 7}
+#qqPlot
+qqPlot(best_fit, ylab = "Sample Qunatiles", xlab = "Theoretical Quantiles",
+       distribution = "norm")
+
+```
+
+[^step]: http://www.stat.columbia.edu/~martin/W2024/R10.pdf
+[^aic]: http://web.mit.edu/r_v3.0.1/lib/R/library/stats/html/step.html

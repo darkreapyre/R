@@ -5,5 +5,6 @@ This repository contains some sample of my musings with R and serves as a reposi
 * Analysis Reports
     * Personal Acvtivity Monitor
     * Severe Weather
+    * Fuel Economy
 * Working with Regression
 * Working with the data.table package
