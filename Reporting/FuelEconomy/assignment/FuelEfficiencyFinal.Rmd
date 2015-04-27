@@ -64,7 +64,7 @@ We run an initial regression analysis to answer the original question of just ho
 summary(fit)
 ```
 
-As can be seen there is a significant correlation between the __Manual__ transmission and __MPG__. But the adjusted $R^2$ is low (__0.34__) showing that the coefficient is not necessary the best predictor. To find a better fitting model, we make use of Step-wise Regression. The `step()`[^step] function in `R` makes use of a search algorithm[^aic] to find the best model. In this case we will use both a Forward selection as well as Backward elimination for model selection.] 
+As can be seen there is a significant correlation between the __Manual__ transmission and __MPG__. But the adjusted $R^2$ is low (__0.34__) showing that the coefficient is not necessary the best predictor. To find a better fitting model, we make use of Step-wise Regression. The `step()`[^step] function in `R` makes use of a search algorithm[^aic] to find the best model. In this case we will use both a Forward selection as well as Backward elimination for model selection. 
 
 ```{r summary, echo = FALSE}
 #Show the coefficents of the best fit
@@ -114,8 +114,9 @@ plot(fitted(best_fit), residuals(best_fit),
 #qqPlot
 qqPlot(best_fit, ylab = "Sample Qunatiles", xlab = "Theoretical Quantiles",
        distribution = "norm")
-
 ```
+
+****
 
 [^step]: http://www.stat.columbia.edu/~martin/W2024/R10.pdf
 [^aic]: http://web.mit.edu/r_v3.0.1/lib/R/library/stats/html/step.html
