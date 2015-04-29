@@ -1,0 +1,53 @@
+---
+title: "My Week 3 Notes"
+output: 
+    pdf_document:
+        toc: true
+        latex_engine: xelatex
+    fontsize: 11pt
+    geometry: margin=1in
+---
+\newpage
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+require(GGally)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+```
+# Multivariate Examples 
+## Exmple 1: Swiss Fertifility Data 
+```{r example1a, echo = TRUE, fig.height = 8, fig.width = 7}
+#Load the Swiss Fertility Dataset
+data(swiss)
+str(swiss)
+
+#Plot
+g <- ggpairs(swiss, lower = list(continuous = "smooth"),params = c(method = "loess"))
+g
+```
+### Plot Interpratation 
+The Plot is fairly easy to interpret, but it is important to note that the correlation between the $X$ and $Y$ axis is show in the graph (with the confidence bands), but the empirical correlation is diagonally to the right. 
+
+### Model Interpretation 
+By using fertility as thwe outcome, `lm()` is called using __AL__L the predictors.
+```{r example1b, echo = TRUE}
+summary(lm(Fertility ~ ., data = swiss))$coefficients
+```
+To better underatand the results, we focus on __Agriculture__ and particularly the __Estimate__ (__`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2]`__). This is interpreted as the following: 
+
+* Our model estiamtes an expected __`r sqrt(round(summary(lm(Fertility ~ ., data = swiss))$coefficients[2], 2)^2)`__ decrease (because it's negative) in standardized fertility for every 1% increase in percentage (and not proportion) of males involved in agriculture in holding the remaining variables constant. 
+* The next column, Std. Error (__`r round(summary(lm(Fertility ~ ., data = swiss))$coefficients[2, 2], 2)`__), talks about how precice teh variable is. In other words, how precise the statistical veriability is. 
+* To perform a hypothesis test (__t-test__) for: 
+    * $H_0: \beta_{Agri} = 0$ __vs.__ $H_a: \beta_{Agri} \neq 0$. (TO basically test wether or not $\beta_{Agri}$ is zero). 
+    * We take the estimate and subtract off the hypothesised value ($0$) and divide by the standard error of the estimate. 
+    * So the __t statistic__ is nothing other than the estimate divided by the standard error. 
+    *  `R` conveniently provides this for us: __`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2, 3]`__. 
+* The probability of getting such a __t statistic__ is __`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2, 4]`__. 
+
+### How Model Selection changes the Estimates 
+```{r example1c, echo = TRUE}
+#Model with just agiculture as apredictor
+summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients
+```
+* The Agriculture variable alone has about the same magnitude as as it did when used with other predictors. __`r summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients[2]`__ as opposed to __`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2]`__, but instead of Argriculture having a $negative$ affect on Agriculture, it now has a $positive$ effect. 
