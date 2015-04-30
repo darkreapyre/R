@@ -12,12 +12,15 @@ output:
 # make this an external chunk that can be included in any file
 require(knitr)
 require(GGally)
+require(ggplot2)
+require(datasets)
+require(stats)
 options(width = 100)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 ```
 # Multivariate Examples 
 ## Exmple 1: Swiss Fertifility Data 
-```{r example1a, echo = TRUE, fig.height = 8, fig.width = 7}
+```{r example1a, echo = TRUE, fig.height = 6, fig.width = 7}
 #Load the Swiss Fertility Dataset
 data(swiss)
 str(swiss)
@@ -26,11 +29,11 @@ str(swiss)
 g <- ggpairs(swiss, lower = list(continuous = "smooth"),params = c(method = "loess"))
 g
 ```
-### Plot Interpratation 
+### Plot Interpretation 
 The Plot is fairly easy to interpret, but it is important to note that the correlation between the $X$ and $Y$ axis is show in the graph (with the confidence bands), but the empirical correlation is diagonally to the right. 
 
 ### Model Interpretation 
-By using fertility as thwe outcome, `lm()` is called using __AL__L the predictors.
+By using fertility as thwe outcome, `lm()` is called using __ALL__ the predictors.
 ```{r example1b, echo = TRUE}
 summary(lm(Fertility ~ ., data = swiss))$coefficients
 ```
@@ -50,4 +53,102 @@ To better underatand the results, we focus on __Agriculture__ and particularly t
 #Model with just agiculture as apredictor
 summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients
 ```
-* The Agriculture variable alone has about the same magnitude as as it did when used with other predictors. __`r summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients[2]`__ as opposed to __`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2]`__, but instead of Argriculture having a $negative$ affect on Agriculture, it now has a $positive$ effect. 
+* The Agriculture variable alone has about the same magnitude as as it did when used with other predictors. __`r summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients[2]`__ as opposed to __`r summary(lm(Fertility ~ ., data = swiss))$coefficients[2]`__, but instead of Argriculture having a $negative$ affect on Fertility, it now has a $positive$ effect. 
+* Adjusting for the additional variables actually changes the actual direction of the effect of Agriculture on Fertility. $\rightarrow$ __Simpson's Paradox__. 
+* In both cases, the Agriculture coefficient is strongly statistically signigicant, `r summary(lm(Fertility ~ ., data = swiss))$coefficients[2, 4]` __AND__ `r summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients[2, 4]`. 
+
+For more information on on how an effect can reverse itself, see [Appendix A][]. 
+
+### Dummy Varibles 
+Linear Regression Models are very flexible. For instance, we can fit __factor__ variables as regressors to determine __"analysis of variance"__, which is a special case of linear models. As an example, consider the linear model:
+
+$$Y_i = \beta_0 + X_{i1} \beta_1 + \epsilon_i$$
+
+* Where each $X_{i1}$ is __binary__. So it is a $1$ if measurement $i$ is in a group and 0 otherwise. 
+    * For example, treated versus not treated in a clinical trial. 
+    * For people in the group that recived the treatment, their mean is $E[Y_i] = \beta_0 + \beta_1$. 
+    * For people in the control group, whose covariate $X_i = 0$, their mean is  $E[Y_i] = \beta_0$.
+    * The linear fit work out to be $\hat \beta_0 + \hat \beta_1$ is the mean for those in the "treated" group and $\hat \beta_0$ is the mean for those in the control group. 
+    * $\beta_1$ is interpretted as the $increase$ or $decrease$ in the mean reponse for those that had $X$ value of $1$ (__Treated__), comparing those in the group to those in the control group (__Not Treated__). 
+* This is just a nice way to fit a two-level factor variable as a linear regression variable. It provides not only the fitted value showing the means for both of the groups __BUT__ also provides the inference for comparing the two groups automatically. 
+* The __t-test__ for $\beta_1$ is identical to a two group __t-test__.
+* This methadology can also be extended beyond two factors (e.g. three level factor):$$Y_i = \beta_o + X_{i1} \beta_1 + X_{i2} \beta_2 + \epsilon_i$$ 
+    * If $i$ is the level $1$ factor variable: $E[Y_i] = \beta_0 +\beta_1$. 
+    * If $i$ is the level $2$ factor variable: $E[Y_i] = \beta_0 + \beta_2$. 
+    * If $i$ is the level $3$ factor varible: $E[Y_i] = \beta_0$. 
+    * $\beta_1$ compares level $1$ with level $3$. 
+    * $\beta_2$ compares level $2$ with level $3$. 
+    * $\beta_1 - \beta_2$ compares level $1$ to level $2$. 
+
+### Dummary Variable Example: Insect Sprays 
+```{r InsectSprays, echo = TRUE, fig.height = 5, fig.width = 5}
+#Load the dataset 
+data(InsectSprays)
+
+#Plot
+g <- ggplot(data = InsectSprays, aes(y = count, x = spray, fill  = spray))
+g <- g + geom_violin(colour = "black", size = 2) #violin plot
+g <- g + xlab("Type of spray") + ylab("Insect count")
+g
+```
+
+\newpage
+
+# Appendix A 
+Regression Model Selection is a dynamic process where we have to think about which variables to include. A scientific process of putting confounders $in$ and $out$ of the Model and thinking about what their overall effect is in order to evalaute the best model.
+```{r simulation, echo = TRUE}
+#Assume we ahve 100 data points
+n <- 100
+
+#The second regressor (X2) is the values 1 to 100
+x2 <- 1:n
+
+#X1 is a variable that depends on x2 and "random noise"
+x1 <- .01 * x2 + runif(n, -.1, .1)
+
+#Y is negaitvley associated with x1, but positively associated with x2
+y <- -x1 + x2 + rnorm(n, sd = .01) #add random normal noise
+```
+__Firstly__, from the plot of $X_1$ we can see that it increases and there is the additional, random noise (around the line). 
+```{r firstly, echo = TRUE}
+#Plot x1
+plot(x1)
+
+```
+__Secondly__, We examine the output if we fit a liniar model with $X_1$ as the only predictor.
+```{r secondly, echo = TRUE}
+#Fit x1 by itself
+summary(lm(y ~ x1))$coef
+```
+What we see is that we get this enormous coefficient (__`r summary(lm(y ~ x1))$coef[2]`__), which is nothing near the $-1$ that we hope it to be. 
+__Thirdly__, we fit the correct model. 
+```{r therefore, echo = TRUE}
+summary(lm(y ~ x1 + x2))$coef
+```
+Now we get the correct coefficients ($\approx -1$ and $\approx 1$), because regression is taking $x_1$ and removing the effect of $x_2$. __Lastly__, we do some plots to higlight exactly how this works. 
+```{r thirdly, echo = TRUE, fig.height = 5, fig.width = 7, results = 'show'}
+#Put the data into a data frame for ggplot2 plotting
+dat <- data.frame(y = y, x1 = x1, x2 = x2, ey = resid(lm(y ~ x2)), ex1 = resid(lm(x1 ~ x2)))
+g <- ggplot(dat, aes(y = y, x = x1, colour = x2))
+g <- g + geom_point(colour="grey50", size = 5) + geom_smooth(method = lm, se = FALSE, colour = "red") 
+g <- g + geom_point(size = 4) 
+g
+```
+The plot shows $X_1$ as it realtes to $Y$ and as can be seen from the line, there is a clear, $positive$ linear relationship between the two variables. However, we can see from $X_2$ (which is the color), that there is aalse a clear positive gradient. As $Y$ goes up, so does $X_2$, but as $X_1$ goes up, so does $X_2$ $\rightarrow$ __Confounding/Correlation__. 
+
+__Lastly__, we plot the residuals. 
+```{r lastly, echo = TRUE, fig.height = 5, fig.width = 7, results = 'show'}
+g2 <- ggplot(dat, aes(y = ey, x = ex1, colour = x2))  
+g2 <- g2 + geom_point(colour="grey50", size = 5) + geom_smooth(method = lm, se = FALSE, colour = "red") + geom_point(size = 4) 
+g2
+```
+As can be seen from the plot, the residual $Y$ and the residual $X_1$, there is a clear $negative$ linear relationship (with slope being $\approx -1$). Additionally, the $X_2$ variable is clearly __NOT__ related to the residual $X_1$ variable. 
+
+So the `lm()` funciton is clearly removing the $X_2$ from both $X_1$ and $Y$ to provide the correct relationship when both variables are fitted. __BUT__ this doesn't mean that throwing every variable into the regression model is the way to go. Adding extra and unnecessary varibles introduces additional consequences. 
+For example, $Z$ adds no new linear information, since it's a linear combination of variables already included. `R` just drops 
+terms that are linear combinations of other terms. 
+```{r z, echo = TRUE}
+z <- swiss$Agriculture + swiss$Education
+lm(Fertility ~ . + z, data = swiss)
+```
+So if we see a __NA__ coefficient in `R`, we've inluded a variable that is either numerically or exactly a linear combination of the other varibales. 
