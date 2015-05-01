@@ -11,6 +11,7 @@ output:
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
 # make this an external chunk that can be included in any file
 require(knitr)
+require(dplyr)
 require(GGally)
 require(ggplot2)
 require(datasets)
@@ -19,7 +20,8 @@ options(width = 100)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 ```
 # Multivariate Examples 
-## Exmple 1: Swiss Fertifility Data 
+## Example 1
+For this example we will use the `swiss` data set.
 ```{r example1a, echo = TRUE, fig.height = 6, fig.width = 7}
 #Load the Swiss Fertility Dataset
 data(swiss)
@@ -80,21 +82,109 @@ $$Y_i = \beta_0 + X_{i1} \beta_1 + \epsilon_i$$
     * $\beta_2$ compares level $2$ with level $3$. 
     * $\beta_1 - \beta_2$ compares level $1$ to level $2$. 
 
-### Dummary Variable Example: Insect Sprays 
-```{r InsectSprays, echo = TRUE, fig.height = 5, fig.width = 5}
-#Load the dataset 
-data(InsectSprays)
+For more information on working with __Dummy Variables__, see [Appendix B][]. 
+
+## Example 2 
+For this example we will once again use the `swiss` data set, but highlight fitting multiple lines with different intercepts and differnt slopes, one for each group. To demonstrate this, we will look at the `Catholic` variable. 
+```{r catholic, echo = TRUE}
+#Plot a histogram of the Catholic Variable
+hist(swiss$Catholic)
+```
+Notice that the variable is very __bimodal__ because most provices are either majority Catholic or majority Protestant $\rightarrow$ bimodal = either/or. To better demonstrate this, we create binary "Catholic" varible which is $1$ if the province is majority Catholic and $0$ if it is majority Protestant. 
+
+```{r mutate, echo = TRUE, fig.height = 5, fig.width = 7}
+#Use dplyr package to specify 1 if greater then 50% catholic
+swiss <- mutate(swiss, Catholic.Bin = 1 * (Catholic > 50))
+
+#Plot the data
+g <-  ggplot(swiss, aes(x = Agriculture, y = Fertility, colour = factor(Catholic.Bin)))
+g <- g + geom_point(size = 6, colour = "black") + geom_point(size = 4)
+g <- g + xlab("% in Agriculture") + ylab("Fertility")
+g
+```
+The above plot shows the two factor variables. Although there seems to be some clusters it is __NOT__ obvious if there is any linear correlation. So how do we fit a model given the following? 
+
+$Y = Fertility$  
+$X_1 = Agriculture$  
+$X_2 = \begin{cases}
+   1, & \text{if over 50\% Catholic} \\
+   0, & \text{otherwise}
+  \end{cases}$  
+
+### Model Option 1 
+$$E\left[y | x_1, x_2\right] = \beta_0 + \beta_1 X_1$$
+
+This Will just be a line and it will disregard the religion of the proviunce entirely, since there is no $X_2$. 
+```{r model1, echo = TRUE, fig.height = 5, fig.width = 7}
+#Fit the model that doesn't include religoin at all
+fit1 <- lm(Fertility ~ Agriculture, data = swiss)
 
 #Plot
-g <- ggplot(data = InsectSprays, aes(y = count, x = spray, fill  = spray))
-g <- g + geom_violin(colour = "black", size = 2) #violin plot
-g <- g + xlab("Type of spray") + ylab("Insect count")
-g
+g1 <- g
+g1 <- g1 + geom_abline(intercept = coef(fit1)[1], slope = coef(fit1)[2], size = 2, color = "red")
+g1
+
+#Coefficient Summaries
+summary(fit1)$coef
+```
+
+### Model Option 2 
+$$E\left[y | x_1, x_2\right] = \beta_0 + \beta_1 X_1 + \beta_2 X_2$$ 
+
+* If $X_2 = 0$ $\rightarrow$ $\beta_0 + \beta_1 X_1 + \beta_2 \cdot 0$ (__Protestant__) 
+    * $\beta_0 +\beta_1 X_1$
+* If $X_2 = 1$ $\rightarrow$ $\beta_0 + \beta_1 X_1 + \beta_2 \cdot 1$ (__Catholic__) 
+    * $\beta_0 + \beta_1 X_1 + \beta_2$
+* Fitting this model includes $X_1$ and $X_2$ - but no interaction - will fit two models that have the __same slope__ ($\beta_1 X_1$), but __different intercepts__ $\rightarrow$ $\beta_0$ for the first and $\beta_0 + \beta_2$ for the second. 
+```{r model2, echo = TRUE, fig.height = 5, fig.width = 7}
+#Fit the model that has two paralle lines
+fit2 <- lm(Fertility ~ Agriculture + factor(Catholic.Bin), data = swiss)
+
+#Plot
+g2 <- g
+g2 <- g2 + geom_abline(intercept = coef(fit2)[1], slope = coef(fit2)[2],
+                       size = 2, color = "blue") #Protestant Line
+g2 <- g2 + geom_abline(intercept = coef(fit2)[1] + coef(fit2)[3],
+                       slope = coef(fit2)[2], size = 2,
+                       color = "red") #Catholic Line
+g2
+
+#Coefficient Summaries
+summary(fit2)$coef
+```
+
+### Model Option 3 
+$$E\left[y | x_1, x_2\right] = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_1 X_2$$ 
+
+* If $X_2 = 0$ $\rightarrow$ $\beta_0 + \beta_1 X_1 + \beta_2 \cdot 0 + \beta_3 X_1 \cdot 0$ (__Protestant__) 
+    * $\beta_0 + \beta_1 X_1$
+* If $X_2 = 1$ $\rightarrow$ $\beta_0 + \beta_1 X_1 + \beta_2 \cdot 1 + \beta_3 X_1 \cdot 1$ (__Catholic__) 
+    * $\beta_0 + \beta_1 X_1 + \beta_2 + \beta_3 X_1$ __OR__
+    * $\left(\beta_0 + \beta_2\right) + \left(\beta_1 + \beta_3\right)X_1$
+* Fitting this model and including an interaction term ($\beta_3 X_1 X_2$), then we fit two lines, but now the two lines have __different slopes__ and __different intercepts__. 
+* The coefficient in front of the "Catholic" term ($\beta_2 X_2$) is going to be the change in the intercept from "Protestant" $\beta_0$ to "Catholic" $\left(\beta_0 + \beta_2\right)$. 
+* The $\beta_3$ term in front of the interaction is going to be the change in the slope going from "Protestant" $\beta_1 X_1$ to "Catholic"$\left(\beta_1 + \beta_3\right)$. 
+```{r model3, echo = TRUE, fig.height = 5, fig.width = 7}
+#Fit the model that has different slopes and different intercepts
+fit3 <- lm(Fertility ~ Agriculture * factor(Catholic.Bin), data = swiss)
+
+#Plot
+g3 <- g
+g3 <- g3 + geom_abline(intercept = coef(fit3)[1], slope = coef(fit3)[2], size = 2,
+                       color = "blue") #Protestant Line
+g3 <- g3 + geom_abline(intercept = coef(fit3)[1] + coef(fit3)[3], 
+                          slope = coef(fit3)[2] + coef(fit3)[4], size = 2,
+                       color = "red") #Catholic Line
+g3
+
+#Coefficient Summaries
+summary(fit3)$coef
 ```
 
 \newpage
 
 # Appendix A 
+## How the Model Effect can Reverse Itself 
 Regression Model Selection is a dynamic process where we have to think about which variables to include. A scientific process of putting confounders $in$ and $out$ of the Model and thinking about what their overall effect is in order to evalaute the best model.
 ```{r simulation, echo = TRUE}
 #Assume we ahve 100 data points
@@ -152,3 +242,78 @@ z <- swiss$Agriculture + swiss$Education
 lm(Fertility ~ . + z, data = swiss)
 ```
 So if we see a __NA__ coefficient in `R`, we've inluded a variable that is either numerically or exactly a linear combination of the other varibales. 
+
+\newpage
+
+# Appendix B 
+## Dummary Variable Example: Insect Sprays 
+```{r InsectSprays, echo = TRUE, fig.height = 5, fig.width = 7.5}
+#Load the dataset 
+data(InsectSprays)
+
+#Plot
+g <- ggplot(data = InsectSprays, aes(y = count, x = spray, fill  = spray))
+g <- g + geom_violin(colour = "black", size = 2) #violin plot
+g <- g + xlab("Type of spray") + ylab("Insect count")
+g
+```
+
+The plot shows the sprays labelled $A$ through $F$ along with the count of insects to which each spray was applied. So how can we test the differences in each of the factor levels using linear models?
+
+To answer this question we first habe to fit the linear model with the __Spray__ as group and not broken down by factor level. 
+```{r, echo= TRUE}
+summary(lm(count ~ spray, data = InsectSprays))$coef
+```
+__NOTE:__ Spray A is missing, because the coefficients listed are in comparison with Spray A. For eaxmple, the Spray C Estimate (__`r summary(lm(count ~ spray, data = InsectSprays))$coef[3]`__) is the change in the mean between Spray C and Spray A. Additionally the Intercept Estimate (__`r summary(lm(count ~ spray, data = InsectSprays))$coef[1]`__) is the mean for Spray A. So in other words it's the difference between Spray C and Spray A. So how do we compare the various factor levels with rach other?
+
+To answer this, we __manually__ hard code dummy variables and not allow `R` to pick the reference level.
+```{r, echo= TRUE}
+#Multiple the factor level by 1 to change it from boolean to numeric
+summary(lm(count ~ 
+   I(1 * (spray == 'B')) + I(1 * (spray == 'C')) +  
+   I(1 * (spray == 'D')) + I(1 * (spray == 'E')) +
+   I(1 * (spray == 'F')) + I(1 * (spray == 'A')), data = InsectSprays))$coef
+```
+__NOTE:__ Even though Spray A is specifically called out as a factor level, it is still not listed. This is better shown by calling the full output and not just the coefficients.
+```{r, echo= TRUE}
+#Multiple the factor level by 1 to change it from boolean to numeric
+summary(lm(count ~ 
+   I(1 * (spray == 'B')) + I(1 * (spray == 'C')) +  
+   I(1 * (spray == 'D')) + I(1 * (spray == 'E')) +
+   I(1 * (spray == 'F')) + I(1 * (spray == 'A')), data = InsectSprays))
+```
+__NOTE:__ The Spray A coefficient shows up as __NA__. This is because Spray A is redundant. We have $6$ means and an intercept. So including Spray A is therefore redundant. So what if we do want the coefficients to be the mean for each of the groups as opposed to be being factor levels referenced to a "control" level? $\rightarrow$ __Remove the Intercept__.
+```{r, echo= TRUE}
+#Use "-1" to remove the intercept
+summary(lm(count ~ spray - 1, data = InsectSprays))$coef
+
+#Use dplyr package and show the means for each Spray
+summarise(group_by(InsectSprays, spray), mn = mean(count))
+```
+__NOTE:__ The output of the means above is same as the estimates for each coefficient, subtracted from the Intercept or reference level. __BUT__ we do want to include the reference level so that we can do tests $\rightarrow$ __P Values__ being showing the differences between each factor level __t statistic__ etc. So how we "play" around with factor variables in `lm()` is very important in terms of how the final model is interpreted, what the intercept means changes significantly depending on what the reference factor level is. 
+
+This is shown in the following example where Spray C is the reference factor level.
+```{r, echo = TRUE}
+#Create a copy of InsecSpray with "C" as the reference factor level
+spray2 <- relevel(InsectSprays$spray, "C")
+summary(lm(count ~ spray2, data = InsectSprays))$coef
+```
+## Summary
+* If we treat Spray as a factor, `R` includes an intercept and omits the alphabetically first level of the factor or reference level.
+  * All t-tests are for comparisons of Sprays versus the reference level, Spray A.
+  * Emprirical mean for A is the intercept.
+  * Other group means are the intercept __PLUS__ their coefficient. 
+* If we omit an intercept, then it includes terms for all levels of the factor. 
+  * Group means are the coefficients. 
+  * Tests are tests of whether the groups are different than zero. (Are the expected counts zero for that spray.)
+* If we want comparisons between, Spray B and Spray C, say we could refit the model with Spray C (or Spray B) as the reference level. 
+
+## Caveats 
+* Counts are bounded from below by $0$, violates the assumption of normality of the errors. 
+  * Also there are counts near zero, so both the actual assumption and the intent of the assumption are violated. 
+  * It may be a better optiohn to model the data as a __Poisson Distribution)__. 
+* Variance does not appear to be constant around the mean. 
+  * The means/estimates are probably correct, but the inferences aren't.
+  * Perhaps taking logs of the counts would help. 
+  * There are $0$ counts, so maybe `log(Count + 1)`. 
+* See Week 4 Notes for Poisson GLMs for fitting count data. 
