@@ -26,8 +26,15 @@ output:
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
 # make this an external chunk that can be included in any file
 require(knitr)
-options(width = 100)
+require(xtable)
+options(xtable.comment = FALSE)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+#Add Table Captions
+#table <- [OUTPUT]
+#```{r echo = FALSE, results='asis'}
+#print(xtable(table, caption = "caption"), comment = FALSE)
+#```
 
 ```
 
