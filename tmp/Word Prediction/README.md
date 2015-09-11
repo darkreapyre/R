@@ -6,22 +6,16 @@ The primary objective is to test various forms of a __Neaural Network__ to accom
 
 ## Methadology  
 
-### Option 1: Feed-forward Neural Network  
+### Option 1: Neural Network  
 
-The Feed-forward Neural Network will leverage Octave/MatLab code from my Neural Network programming assignment from the [Neural Networks for Machine Learning Coursera](https://www.coursera.org/course/neuralnets) course.  
+A Neural Network will leverage the `R.matlab` package (and potentially the `darch` package) to work on the Octave/MATLAB code from my Neural Network programming assignment from the [__Neural Networks for Machine Learning Coursera__](https://www.coursera.org/course/neuralnets) course. Should this method fail, then the second task will be to manually port the code by rewriting the various functions in `R`.  
 
-#### Option 1a: R.matlab  
+Depending the success and optimization results of these tasks, an alternative option is involve reconstructing a [__Simple Recurrent Network__](https://web.stanford.edu/group/pdplab/pdphandbook/handbookch8.html) to capture the structure of the word sequences and hence create a model to predict the next word. 
 
-The first task is to leverage the `R.matlab` package (and potentially the `darch` package) to execute the code in `R`.  
+### Option 2: P-chain  
 
-#### Option 1b: Manual Porting  
-
-should the above task prove unsuccessfule, the second task will to manually port the MatLab/Octave code by rewriting the various functions in `R`.  
-
-#### Option 1c: SRA  
-
-Depending on the success and optimization results of the above tasks, this task will involve leveraging the 
-
-### Option 2: Dual-Path  
+As an alternative methodology to the above __Neaural Network__ testing, a unified framework called [__P-chain__](http://rstb.royalsocietypublishing.org/content/369/1634/20120394) will be explored. __P-chain__  is an experimental and connectionist modelling work that shows how learning can play a role in explaining language production phenomena like sentence structure. 
 
 ### Option 3: N-grams  
+
+Depending the success and optimization results of both options one and two, a last resort methodology of testing the standard word prediction packages from __CRAN__ is tested.
