@@ -30,7 +30,7 @@ opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'c
 
 __Machine Learnng:__ 
 
-* Explores the construciton and usage of algorithms. 
+* Explores the construction and usage of algorithms. 
 * Improves performance as it receives __more__ infomrtion. 
 * Experience comes from observations on how particular problems have been previously solved.
 
@@ -115,11 +115,51 @@ The Average wage of a 60 year old worker is __`r round(result, digits = 2)` USD_
 In the majority of Machine Learning problems involve __Classification__, __Regression__ and __Clustering__. 
 
 * A classification problem involves predicting whether a given observation belongs to a certain catagory. What's important to remember regaridng Classification problems, is that the output is __Qualitative__ and the possible classes to which a new observation can belong, are known beforehand (Predefined Classes). 
-* A Regression problem involves predicting a continuous, quantitative value based on previous information. The input value are refered to as __Predictors__ and the outout is the __Response__. Regression is somehat simmilar to Classification in that it tries to estimate a funciton that maps the input to the output based on earlier observations, except that the estimate is an actual value. See [Appendix A: Regression Coefficients][].
-*  
+* A Regression problem involves predicting a continuous, quantitative value based on previous information. The input value are refered to as __Predictors__ and the outout is the __Response__. Regression is somehat simmilar to Classification in that it tries to estimate a funciton that maps the input to the output based on earlier observations, except that the estimate is an actual value. See [Appendix A: Regression Coefficients][]. What's important to remember is that the reponse is ALWAYS __Quantitative__ and the model can only be built with input knowledge of previous input/output observations. 
+*  A Clustering problem involves tring to group `similar` observations into clusters, while making sure the clusters thmselves are `dissimilar`. Clustering is similar to Classification, but without saying to wich class the observations have  to belong, therfore no previous knowledge regaring the labels is required.
+
+### Example 3: Classification for Filtering Spam
+
+Filtering spam from relevant emails is a typical machine learning task. Information such as word frequency, character frequency and the amount of capital letters can indicate whether an email is spam or not. In the following exercise we work with the dataset `emails` from the [UCI Machine Learning Repository](http://s3.amazonaws.com/assets.datacamp.com/course/intro_to_ml/emails_small.csv). Here, several emails have been labeled by humans as spam (1) or not spam (0) and the results are found in the column `spam`. The considered feature in `emails` is `avg_capital_seq`. It is the average amount of sequential capital letters found in each email. Crete a very basic spamfilter, `spam_classifier()` that uses `avg_capital_seq` to predict whether an email is spam or not. Inspect the `emails` dataset, apply `spam_classifier()` to it and compare the outcome with the true labels. 
+
+#### Instructions:
+
+* Check the dimensions of this dataset, use `dim()`.
+* Create the `spam_classifier()` function as a simple set of statements that decide between spam and no spam based on a single input vector.
+* Pass the `avg_capital_seq` column of emails to `spam_classifier()` to determine which emails are spam and which aren't and assign the resulting outcomes to `spam_pred`.
+* Compare the prediction, `spam_pred`, to the true spam labels in `emails` and print out the result. How many of the emails were correctly classified?
+
+#### Results:
+
+```{r exercise1_3, echo = TRUE}
+# Load the emails dataset into the workspace
+
+# Show the dimensions of emails
+
+
+# Inspect definition of spam_classifier()
+spam_classifier <- function(x){
+  prediction <- rep(NA,length(x))
+  prediction[x > 4] <- 1
+  prediction[x >= 3 & x <= 4] <- 0
+  prediction[x >= 2.2 & x < 3] <- 1
+  prediction[x >= 1.4 & x < 2.2] <- 0
+  prediction[x > 1.25 & x < 1.4] <- 1
+  prediction[x <= 1.25] <- 0
+  return(prediction)
+}
+
+# Apply the classifier to the avg_capital_seq column: spam_pred
+
+
+# Compare spam_pred to emails$spam. Use ==
+
+
+```
 
 \newpage
 
 # Appendix A: Regression Coefficients
 
-As an example of trying to fit a linear function between a `Predictor` (e.g. Weight) and a `Response` (e.g. Height), use 
+As an example of trying to fit a linear function between a `Predictor` (e.g. Weight) and a `Response` (e.g. Height). $$Height \approx \beta_0+\beta_1\times Weight$$ Together $\beta_1$ and $\beta_0$ are known as the model coefficients or parameters. As soon as we know what these coefficients are, the function is able to convert any new input to output. This means that solving the Machine Learning problem is to find good values for $\beta_1$ and $\beta_0$, estimated from previous input to previous output observations. 
+
