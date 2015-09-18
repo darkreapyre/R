@@ -52,19 +52,19 @@ The __observations__ correspond to the rows and the columns correspond to the __
 
 So the goal of Machine Learning, based on data shown in the example, is to build a __Model of Prediction__. Build a model that can help make predictions about the data for future instances of similar problems. But before the model can be built, one firstly has to acquaint themselves with the Data. The following Excercises deomstrate this process.
 
-## Exercise 1: Getting acquanted with data 
+### Exercise 1: Getting acquanted with data 
 
 As a first step, we will find out some properties of the dataset with which we will be working. More specifically, we want to know mre about the dataset's number of observations and variables. To do this, we will explore the `iris` dataset. 
 
-### Instructions  
+#### Instructions:
 
 * Use the two ways presented in the video to find out the number of observations and variables of the iris data set: `str()` and `dim()`. 
 * Call `head()` and `tail()` on `iris` to reveal the first and last observations in the iris dataset. 
 * Finally, call the `summary()` function to generate a summary of the dataset. What does the printout reveal?
 
-### Results  
+#### Results:
 
-```{r exercise1, echo= TRUE}
+```{r exercise1_1, echo= TRUE}
 # The iris is available from the datasets package and is loaded by default
 # Reveal number of observations and variables by looking at the structure
 str(iris)
@@ -81,21 +81,21 @@ summary(iris)
 
 ```
 
-## Exercise 2: Basic Prediction Model  
+### Exercise 2: Basic Prediction Model  
 
-To examine a first take a using Machine Learning to make a prediction, we will be using the `Wage` dataset. This dataset contains the wage and some general inf;ormaiton for workers in the mid-Atlanic regions of the United States and there could be some relationship between the `age` of a worker and his/her `wage`. Older workers tend to earn more on average than their younger counterparts, hence one could expect an increasing trend in wage as workers age. So we build a linear regression model for you, using the `lm()` function to model the wage of a worker based on his/her age.
+To examine a first take a using Machine Learning to make a prediction, we will be using the `Wage` dataset. This dataset contains the wage and some general informaiton for workers in the mid-Atlanic regions of the United States and there could be some relationship between the `age` of a worker and his/her `wage`. Older workers tend to earn more on average than their younger counterparts, hence one could expect an increasing trend in wage as workers age. So we build a linear regression model for you, using the `lm()` function to model the wage of a worker based on his/her age.
 
 With a linear model `lm_wage`, that is built with previous observations, one can predict the wage of new observations. For example, suppose we want to predict the wage of a 60 year old worker. We can use the `predict()` function for this. This generic function takes a model as the first argument. The second argument should be some unseen observations as a data frame. The `predict()` function is then able to predict outcomes for these observations.
 
-### Instructions  
+#### Instructions:
 
 * Build a Linear Model called `lm_wage`, that models the `wage` by the `age` variable. 
 * Create a single colum data frame called `unseen`, with a single column called `age`, containing a single value of `60`. 
 * Predict the average wage at age 60 using the `predict()` function.
 
-### Results  
+#### Results:
 
-```{r exercise2, echo = TRUE}
+```{r exercise1_2, echo = TRUE}
 # The Wage dataset is already loaded from the outset.
 # Build a Linear Model called lm_wage
 lm_wage <- lm(wage ~ age, data = Wage)
@@ -108,4 +108,18 @@ result <- predict(lm_wage, unseen)
 
 ```
 
-The Average wage of a 60 year old worker is __`r round(result, digits = 2)` USD__ per day.
+The Average wage of a 60 year old worker is __`r round(result, digits = 2)` USD__ per day. 
+
+## Classification, Regression and Clustering  
+
+In the majority of Machine Learning problems involve __Classification__, __Regression__ and __Clustering__. 
+
+* A classification problem involves predicting whether a given observation belongs to a certain catagory. What's important to remember regaridng Classification problems, is that the output is __Qualitative__ and the possible classes to which a new observation can belong, are known beforehand (Predefined Classes). 
+* A Regression problem involves predicting a continuous, quantitative value based on previous information. The input value are refered to as __Predictors__ and the outout is the __Response__. Regression is somehat simmilar to Classification in that it tries to estimate a funciton that maps the input to the output based on earlier observations, except that the estimate is an actual value. See [Appendix A: Regression Coefficients][].
+*  
+
+\newpage
+
+# Appendix A: Regression Coefficients
+
+As an example of trying to fit a linear function between a `Predictor` (e.g. Weight) and a `Response` (e.g. Height), use 
