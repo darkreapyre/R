@@ -1,0 +1,111 @@
+---
+title: "Introduction to Machine Learning"
+output: 
+    pdf_document:
+        toc: true
+    fontsize: 11pt
+    geometry: margin=1in
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+# make this an external chunk that can be included in any file
+require(knitr)
+require(xtable)
+require(ISLR)
+options(xtable.comment = TRUE)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+
+#Add Table Captions
+#table <- [OUTPUT]
+#```{r echo = FALSE, results='asis'}
+#print(xtable(table, caption = "caption"), comment = FALSE)
+#```
+
+```
+
+\newpage
+
+# Chapter 1: What is Machine Learning   
+## Introduction  
+
+__Machine Learnng:__ 
+
+* Explores the construciton and usage of algorithms. 
+* Improves performance as it receives __more__ infomrtion. 
+* Experience comes from observations on how particular problems have been previously solved.
+
+No matter what algorithm used, the primary concept for Machine Learning is __imput knowledge__ or __Data__. Typically this data is a __dataset__ containing a number of observations, each having a number of well defined variables (often called features) :
+
+![alt text](figures/data.png)
+
+From the figure above, we see that each square (row) and its corresponding color is an __observations__. The __features__ in this case are the `size` and `edge` and the `color` is the __label__. In a __R__, the `data.frame()` function is used to depict the dataset above. 
+
+```{r data, echo = TRUE, results = 'asis'}
+squares <- data.frame(size = c("small", "big", "medium"),
+                      edge = c("dotted", "stripped", "normal"),
+                      color = c("green", "yellow", "green"))
+print(xtable(squares, caption = "The dataset as a data.rame"), comment = FALSE)
+
+```
+
+The __observations__ correspond to the rows and the columns correspond to the __variables__. 
+
+So the goal of Machine Learning, based on data shown in the example, is to build a __Model of Prediction__. Build a model that can help make predictions about the data for future instances of similar problems. But before the model can be built, one firstly has to acquaint themselves with the Data. The following Excercises deomstrate this process.
+
+## Exercise 1: Getting acquanted with data 
+
+As a first step, we will find out some properties of the dataset with which we will be working. More specifically, we want to know mre about the dataset's number of observations and variables. To do this, we will explore the `iris` dataset. 
+
+### Instructions  
+
+* Use the two ways presented in the video to find out the number of observations and variables of the iris data set: `str()` and `dim()`. 
+* Call `head()` and `tail()` on `iris` to reveal the first and last observations in the iris dataset. 
+* Finally, call the `summary()` function to generate a summary of the dataset. What does the printout reveal?
+
+### Results  
+
+```{r exercise1, echo= TRUE}
+# The iris is available from the datasets package and is loaded by default
+# Reveal number of observations and variables by looking at the structure
+str(iris)
+
+# Reveal number of observations and variables by looking at the dimensions
+dim(iris)
+
+# Show first and last observations in the iris data set
+head(iris)
+tail(iris)
+
+# Summarize the iris data set
+summary(iris)
+
+```
+
+## Exercise 2: Basic Prediction Model  
+
+To examine a first take a using Machine Learning to make a prediction, we will be using the `Wage` dataset. This dataset contains the wage and some general inf;ormaiton for workers in the mid-Atlanic regions of the United States and there could be some relationship between the `age` of a worker and his/her `wage`. Older workers tend to earn more on average than their younger counterparts, hence one could expect an increasing trend in wage as workers age. So we build a linear regression model for you, using the `lm()` function to model the wage of a worker based on his/her age.
+
+With a linear model `lm_wage`, that is built with previous observations, one can predict the wage of new observations. For example, suppose we want to predict the wage of a 60 year old worker. We can use the `predict()` function for this. This generic function takes a model as the first argument. The second argument should be some unseen observations as a data frame. The `predict()` function is then able to predict outcomes for these observations.
+
+### Instructions  
+
+* Build a Linear Model called `lm_wage`, that models the `wage` by the `age` variable. 
+* Create a single colum data frame called `unseen`, with a single column called `age`, containing a single value of `60`. 
+* Predict the average wage at age 60 using the `predict()` function.
+
+### Results  
+
+```{r exercise2, echo = TRUE}
+# The Wage dataset is already loaded from the outset.
+# Build a Linear Model called lm_wage
+lm_wage <- lm(wage ~ age, data = Wage)
+
+# Create a data frame for an unseen age (60)
+unseen <- data.frame(age = 60)
+
+# Predict the wage of a 60 year old worker
+result <- predict(lm_wage, unseen)
+
+```
+
+The Average wage of a 60 year old worker is __`r round(result, digits = 2)` USD__ per day.
