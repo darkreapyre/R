@@ -118,7 +118,7 @@ In the majority of Machine Learning problems involve __Classification__, __Regre
 * A Regression problem involves predicting a continuous, quantitative value based on previous information. The input value are refered to as __Predictors__ and the outout is the __Response__. Regression is somehat simmilar to Classification in that it tries to estimate a funciton that maps the input to the output based on earlier observations, except that the estimate is an actual value. See [Appendix A: Regression Coefficients][]. What's important to remember is that the reponse is ALWAYS __Quantitative__ and the model can only be built with input knowledge of previous input/output observations. 
 *  A Clustering problem involves tring to group `similar` observations into clusters, while making sure the clusters thmselves are `dissimilar`. Clustering is similar to Classification, but without saying to wich class the observations have  to belong, therfore no previous knowledge regaring the labels is required.
 
-### Example 3: Classification for Filtering Spam
+### Exercise 3: Classification for Filtering Spam
 
 Filtering spam from relevant emails is a typical machine learning task. Information such as word frequency, character frequency and the amount of capital letters can indicate whether an email is spam or not. In the following exercise we work with the dataset `emails` from the [UCI Machine Learning Repository](http://s3.amazonaws.com/assets.datacamp.com/course/intro_to_ml/emails_small.csv). Here, several emails have been labeled by humans as spam (1) or not spam (0) and the results are found in the column `spam`. The considered feature in `emails` is `avg_capital_seq`. It is the average amount of sequential capital letters found in each email. Crete a very basic spamfilter, `spam_classifier()` that uses `avg_capital_seq` to predict whether an email is spam or not. Inspect the `emails` dataset, apply `spam_classifier()` to it and compare the outcome with the true labels. 
 
@@ -126,16 +126,17 @@ Filtering spam from relevant emails is a typical machine learning task. Informat
 
 * Check the dimensions of this dataset, use `dim()`.
 * Create the `spam_classifier()` function as a simple set of statements that decide between spam and no spam based on a single input vector.
-* Pass the `avg_capital_seq` column of emails to `spam_classifier()` to determine which emails are spam and which aren't and assign the resulting outcomes to `spam_pred`.
+* Pass the `avg_capital_seq` column of `emails` to `spam_classifier()` and thus determine which emails are spam and which aren't, assigning the resulting outcomes to `spam_pred`.
 * Compare the prediction, `spam_pred`, to the true spam labels in `emails` and print out the result. How many of the emails were correctly classified?
 
 #### Results:
 
 ```{r exercise1_3, echo = TRUE}
 # Load the emails dataset into the workspace
+emails <- read.csv("data/emails_small.csv")
 
 # Show the dimensions of emails
-
+dim(emails)
 
 # Inspect definition of spam_classifier()
 spam_classifier <- function(x){
@@ -149,13 +150,110 @@ spam_classifier <- function(x){
   return(prediction)
 }
 
-# Apply the classifier to the avg_capital_seq column: spam_pred
+# Apply the classifier to the avg_capital_seq column as spam_pred
+spam_pred <- spam_classifier(emails$avg_capital_seq)
 
-
-# Compare spam_pred to emails$spam. Use ==
-
+# Compare spam_pred to emails$spam
+spam_pred == emails$spam
 
 ```
+
+### Exercise 4: LinkedIn Views for the next 3 days using Regression
+
+Analyze the number of views of a LinkedIn profile by predicting how often a profile will be visited in the next 3 days, based on the views for the past 3 weeks. 
+
+#### Instructions:
+
+* Create a sample vector called `linkedin` with a random amount of profile visits.
+* Create a vector `days` with the numbers from 1 to 21, which represent the previous 21 days of your linkedin views. 
+* Fit a linear model that explains the `linkedin` views based on days. Use the `lm()` function with the appropriate formula. Assign the resulting linear model to `linkedin_lm`. 
+* Using this linear model, predict the number of views for the next three days (22, 23 and 24). Use the `predict()` function and the predefined `future_days` data frame. Assign the result to `linkedin_pred`. 
+* See how the remaining code plots both the historical data and the predictions. Try to interpret the result.
+
+#### Results:
+
+```{r exercise1_4, echo = TRUE}
+# Create the linkedin vector of the number of views per day for 3 weeks
+linkedin <- c(5, 7, 4, 9, 11, 10, 14, 17, 13, 11, 18, 17, 21, 21, 24, 23, 28, 35, 21, 27, 23)
+
+# Create the days vector
+days <- seq(length(linkedin))
+
+# Fit a linear model called on the linkedin views per day as linkedin_lm
+linkedin_lm <- lm(linkedin ~ days)
+
+# Predict the number of views for the next three days: linkedin_pred
+future_days <- data.frame(days = 22:24)
+linkedin_pred <- predict(linkedin_lm, future_days)
+
+# Plot historical data and predictions
+plot(linkedin ~ days, xlim = c(1, 24))
+points(22:24, linkedin_pred, col = "green")
+
+```
+
+### Exercise 5: Separateing the Species of Iris using Clustering
+
+This technique tries to group objects. It does this without any prior knowledge of what these groups could or should look like. In this case, the concepts of prior knowledge and unseen observations are less meaningful than for classification and regression. In this exercise, we group irises into 3 distinct clusters, based on several flower characteristics from the `iris` dataset. The clustering itself will be done with the `kmeans()` function.
+
+__Note:__ In problems that have a random aspect (like `kmeans()`), the `set.seed()` function will be used to enforce reproducibility. If you fix the seed, the random numbers that are generated afterwards are always the same.
+
+#### Instructions:
+
+* Create a `data.frame` of Iris characteristics and vector of Iris species. 
+* Use the `kmeans()` function. The first argument is `my_iris`; the second argument is `3`, as we want to find three groups in `my_iris`. Assign the result to a new variable `kmeans_iris`. 
+* The actual species of the observations is stored in `species`. Use the `table()` function to compare it to the groups the clustering came up with. These groups can be found in the cluster attribute of `kmeans_iris`. 
+* Generate a plot of `Petal.Length` against `Petal.Width` and `colors` by cluster.
+
+#### Results:
+
+```{r exercise1_5, echo = TRUE}
+# Set random seed.
+set.seed(1)
+
+# Create a data.frame of characteristics and vector of species
+my_iris <- iris[-5]
+species <- iris$Species
+
+# Perform k-means clustering on my_iris as kmeans_iris
+kmeans_iris <- kmeans(my_iris, 3)
+
+# Compare the actual Species to the clustering using table()
+table <- table(kmeans_iris$cluster)
+
+# Plot Petal.Width against Petal.Length, coloring by cluster
+plot(Petal.Length ~ Petal.Width, data = my_iris, col = kmeans_iris$cluster)
+
+```
+
+```{r echo = FALSE, results='asis'}
+print(xtable(table, caption = "The clusters that kmeans() came up with"), comment = FALSE)
+
+```
+
+## Supervised vs. Unsupervised Machine Learning 
+
+From the previous techniques, Classification and Regression, we note that are similarities. For both techniques, we try to find a function (or Model) that can later be used to predict labels (or values) for __unseen observations__. It is important that during the training of the function, labeled observations are available to the algorithm and are therefore examples of __Supervised Learning__ techniques. 
+
+Since "labelling" can be tedeous work and is often done by humans, there are other techniques wich don't require labeled observations and are therefore called __Unsupervised Learning__ techniques. Clustering is an example of unsupervised learning in that it finds groups of observations that are similar without requiring a specific label for these observations. 
+
+## Performance of the Model
+
+In Supervised LEarning, the performance of a model can be determined by compaing the __real__ labels of observations with the __predicted__ labels. The goal is to have the models' predictions as close (or simialr) as possible to that of the real data. 
+
+Aternatively, measuring the performance of Unsupervised Learning models is far more difficult, as we don;t have any real labels (or real observations) to compare with.
+
+## Semi-supervised Learning
+
+In Machine LEarning, some techniques overlap between Supervised and Unsupervised learning. For example, our data may contain obersations that are `not` labeled and some that are. To address this kind of dataset:
+
+1. Group similar observations together using __clustering__.
+2. Use information about the cluster as well as the other labeled observations to assign a `class` to the unlabelled observations. 
+3. This will provide more labeled observations to apply Supervised learning techniques on. 
+
+### Exercise 6: Practical Supervised Learning
+
+In the previous exercises, we used the `kmeans()` function to perform clustering on the `iris` dataset. Additionally, we created our own copy of the dataset by removing the `Species` attribute. Thus we removed the labels of the observations. In this exercise, we will use the same dataset, but instead of dropping the `Species` labels, we will use them do some supervised learning. 
 
 \newpage
 
