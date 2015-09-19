@@ -12,6 +12,7 @@ output:
 require(knitr)
 require(xtable)
 require(ISLR)
+require(rpart)
 options(xtable.comment = TRUE)
 opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 
@@ -245,7 +246,7 @@ Aternatively, measuring the performance of Unsupervised Learning models is far m
 
 ## Semi-supervised Learning
 
-In Machine LEarning, some techniques overlap between Supervised and Unsupervised learning. For example, our data may contain obersations that are `not` labeled and some that are. To address this kind of dataset:
+In Machine Learning, some techniques overlap between Supervised and Unsupervised learning. For example, our data may contain obersations that are `not` labeled and some that are. To address this kind of dataset:
 
 1. Group similar observations together using __clustering__.
 2. Use information about the cluster as well as the other labeled observations to assign a `class` to the unlabelled observations. 
@@ -253,7 +254,39 @@ In Machine LEarning, some techniques overlap between Supervised and Unsupervised
 
 ### Exercise 6: Practical Supervised Learning
 
-In the previous exercises, we used the `kmeans()` function to perform clustering on the `iris` dataset. Additionally, we created our own copy of the dataset by removing the `Species` attribute. Thus we removed the labels of the observations. In this exercise, we will use the same dataset, but instead of dropping the `Species` labels, we will use them do some supervised learning. 
+In the previous exercises, we used the `kmeans()` function to perform clustering on the `iris` dataset. Additionally, we created our own copy of the dataset by removing the `Species` attribute, thus we removed the labels of the observations. In this exercise, we will use the same dataset, but instead of dropping the `Species` labels, we will use them do some supervised learning. 
+
+#### Instructions:
+
+* Take a look at the `iris` dataset, using `str()` and `summary()`. 
+* Create the code that builds a supervised learning model by using the `rpart()`. This model will train a decision tree on the `iris` dataset. 
+* Use the `predict()` function with the tree model as the first argument. The second argument should be a dataframe containing observations of which we want to predict the label. In this case, we can use the predefined unseen data frame. The third argument should be `type = "class"`. 
+* Simply print out the result of this prediction step.
+
+#### Results:
+
+```{r exercise 1_6, echo = TRUE, results = 'asis'}
+# Set random seed. Don't remove this line.
+set.seed(1)
+
+# Take a look at the iris dataset
+#str(iris)
+#summary(iris)
+
+# Create decision tree model
+tree <- rpart(Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width, 
+              data = iris, method = "class")
+
+# Create A dataframe containing unseen observations
+unseen <- data.frame(Sepal.Length = c(5.3, 7.2), 
+                     Sepal.Width = c(2.9, 3.9), 
+                     Petal.Length = c(1.7, 5.4), 
+                     Petal.Width = c(0.8, 2.3))
+
+# Predict the label of the unseen observations and print out the result.
+results <- as.matrix(predict(tree, unseen, type = "class"))
+print(xtable(results, caption = "Resultant labels of Unseen Observations"), comment = FALSE)
+```
 
 \newpage
 
