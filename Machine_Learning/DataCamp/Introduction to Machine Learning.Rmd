@@ -263,9 +263,7 @@ In the previous exercises, we used the `kmeans()` function to perform clustering
 * Use the `predict()` function with the tree model as the first argument. The second argument should be a dataframe containing observations of which we want to predict the label. In this case, we can use the predefined unseen data frame. The third argument should be `type = "class"`. 
 * Simply print out the result of this prediction step.
 
-#### Results:
-
-```{r exercise 1_6, echo = TRUE, results = 'asis'}
+```{r exercise 1_6, echo = TRUE}
 # Set random seed. Don't remove this line.
 set.seed(1)
 
@@ -285,8 +283,25 @@ unseen <- data.frame(Sepal.Length = c(5.3, 7.2),
 
 # Predict the label of the unseen observations and print out the result.
 results <- as.matrix(predict(tree, unseen, type = "class"))
+```
+
+#### Results:
+
+```{r echo = FALSE, results='asis'}
 print(xtable(results, caption = "Resultant labels of Unseen Observations"), comment = FALSE)
 ```
+
+
+### Exercise 7: How to do unsupervised lerning (Example A)
+
+In this exercise, we will group cars based on their horsepower and their weight by using the cars data frame, which has been derived from the `mtcars` dataset. To cluster the different observations in 2 groups , we will once again use `kmeans()`.
+
+#### Instructions:
+
+* Explore the dataset using `str()` and `summary()`. 
+* Use `kmeans()` with two arguments to group the cars into two clusters based on the cars' __hp__ and __wt__, and assign the result to the `km_cars` variable. 
+* Print out the cluster element of the `km_cars` variable to see which cars belong to which clusters.
+
 
 \newpage
 
