@@ -374,6 +374,31 @@ __The cluster centroids are typically good representations of all the observatio
 
 \newpage
 
+# Chapter 2: Measuring Performance (Measuring the Error)
+## Introduction
+
+How do we assess the quality of a particular Machine Learning model after ir has been "learned"? To answer this question, we have to note the following:
+
+1. Define what is meant by Model quality or performance. The definition depends on the context on what the Model is being used. In most cases, this is described as:
+- __Model Accurancy__
+- __Computation Time__ 
+- __Interpretability__ 
+2. The different tasks of Machine Learning have their own perfmance measures.
+
+## Measuring Performance: Classification
+
+In Classification systems, __Accurancy__ and __Error__ are the basic measures of performance as they reflect the number of times the system is right or wrong. Basically, the __Accuracy__ goes up when the __Error__ rate goes down, and can be termed as follows:
+
+$$Accuracy = \frac {Correctly \ Classified \ Instances}{Total \ Classified \ Instances}$$
+
+__AND__
+
+$$Error \ Rate = 1 - Accuracy$$
+
+However, depending ont he context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified ina particular way. 
+
+\newpage
+
 # Appendix A: Regression Coefficients
 
 As an example of trying to fit a linear function between a `Predictor` (e.g. Weight) and a `Response` (e.g. Height). $$Height \approx \beta_0+\beta_1\times Weight$$ Together $\beta_1$ and $\beta_0$ are known as the model coefficients or parameters. As soon as we know what these coefficients are, the function is able to convert any new input to output. This means that solving the Machine Learning problem is to find good values for $\beta_1$ and $\beta_0$, estimated from previous input to previous output observations. 
