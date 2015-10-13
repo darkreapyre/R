@@ -14,7 +14,7 @@ require(xtable)
 require(ISLR)
 require(rpart)
 options(xtable.comment = TRUE)
-opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
+#opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
 
 #Add Table Captions
 #table <- [OUTPUT]
@@ -37,9 +37,14 @@ __Machine Learnng:__
 
 No matter what algorithm used, the primary concept for Machine Learning is __imput knowledge__ or __Data__. Typically this data is a __dataset__ containing a number of observations, each having a number of well defined variables (often called features) :
 
-![alt text](figures/data.png)
+\begin{figure}[h]
+\center
+\includegraphics{figures/data.png}
+\caption{Example of some Data}
+\label{Figure1}
+\end{figure}
 
-From the figure above, we see that each square (row) and its corresponding color is an __observations__. The __features__ in this case are the `size` and `edge` and the `color` is the __label__. In a __R__, the `data.frame()` function is used to depict the dataset above. 
+From __Figure 1__, we see that each square (row) and its corresponding color is an __observations__. The __features__ in this case are the `size` and `edge` and the `color` is the __label__. In a __R__, the `data.frame()` function is used to depict the dataset above. 
 
 ```{r data, echo = TRUE, results = 'asis'}
 squares <- data.frame(size = c("small", "big", "medium"),
@@ -363,11 +368,12 @@ km_cars <- kmeans(cars, 2)
 # Plot and color the points in the plot based on the clusters
 plot(cars, col = km_cars$cluster)
 
+# Print out the cluster centroids
+km_cars$centers
+
 # Add the centroids to the plot
 points(km_cars$centers, pch = 22, bg = c(1, 2), cex = 2)
 
-# Print out the cluster centroids
-km_cars$centers
 ```
 
 __The cluster centroids are typically good representations of all the observations in a cluster. They are often used to summarize clusters.__
@@ -387,7 +393,7 @@ How do we assess the quality of a particular Machine Learning model after ir has
 
 ## Measuring Performance: Classification
 
-In Classification systems, __Accurancy__ and __Error__ are the basic measures of performance as they reflect the number of times the system is right or wrong. Basically, the __Accuracy__ goes up when the __Error__ rate goes down, and can be termed as follows:
+In Classification systems, __Accurancy__ and __Error__ are the basic measures of performance as they reflect the number of times the system is right or wrong. Basically, the __Accuracy__ goes up when the __Error__ rate goes down, therefore:
 
 $$Accuracy = \frac {Correctly \ Classified \ Instances}{Total \ Classified \ Instances}$$
 
@@ -395,7 +401,14 @@ __AND__
 
 $$Error \ Rate = 1 - Accuracy$$
 
-However, depending ont he context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified ina particular way. 
+However, depending ont he context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified in a particular way. 
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/confusionmatrix.png}
+\caption{Example of a Confusion Matrix}
+\label{Figure2}
+\end{figure}
 
 \newpage
 
