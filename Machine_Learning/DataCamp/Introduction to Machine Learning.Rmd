@@ -401,7 +401,7 @@ __AND__
 
 $$Error \ Rate = 1 - Accuracy$$
 
-However, depending ont he context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified in a particular way. 
+However, depending on the context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified in a particular way. __Figure 2__ shows an example of a __confusion Matrix__.
 
 \begin{figure}[h]
 \center
@@ -409,6 +409,9 @@ However, depending ont he context of the Model it is always a good practice to c
 \caption{Example of a Confusion Matrix}
 \label{Figure2}
 \end{figure}
+
+### Interpreting the Confusion Matrix
+
 
 \newpage
 
