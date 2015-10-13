@@ -264,7 +264,7 @@ In the previous exercises, we used the `kmeans()` function to perform clustering
 * Simply print out the result of this prediction step.
 
 ```{r exercise 1_6, echo = TRUE}
-# Set random seed. Don't remove this line.
+# Set random seed. 
 set.seed(1)
 
 # Take a look at the iris dataset
@@ -281,18 +281,19 @@ unseen <- data.frame(Sepal.Length = c(5.3, 7.2),
                      Petal.Length = c(1.7, 5.4), 
                      Petal.Width = c(0.8, 2.3))
 
-# Predict the label of the unseen observations and print out the result.
+# Predict the label of the unseen observations
 results <- as.matrix(predict(tree, unseen, type = "class"))
 ```
 
 #### Results:
 
 ```{r echo = FALSE, results='asis'}
+# Print out the results
 print(xtable(results, caption = "Resultant labels of Unseen Observations"), comment = FALSE)
 ```
 
 
-### Exercise 7: How to do unsupervised lerning (Example A)
+### Exercise 7: How to do unsupervised lernin
 
 In this exercise, we will group cars based on their horsepower and their weight by using the cars data frame, which has been derived from the `mtcars` dataset. To cluster the different observations in 2 groups , we will once again use `kmeans()`.
 
@@ -302,6 +303,67 @@ In this exercise, we will group cars based on their horsepower and their weight 
 * Use `kmeans()` with two arguments to group the cars into two clusters based on the cars' __hp__ and __wt__, and assign the result to the `km_cars` variable. 
 * Print out the cluster element of the `km_cars` variable to see which cars belong to which clusters.
 
+```{r exercise_7, echo = TRUE}
+# Create a subset of the mtcars datset with just wt and hp
+cars <- subset(mtcars, select = c(wt, hp))
+
+# Set random seed. Don't remove this line.
+set.seed(1)
+
+# Explore the cars dataset
+#str(mtcars)
+#summary(mtcars)
+
+# Group the dataset into two clusters: km_cars
+km_cars <- kmeans(cars, 2)
+
+```
+
+#### Results:
+
+```{r echo = FALSE, results = 'asis'}
+# Print out the contents of each cluster
+results <- as.matrix(km_cars$cluster)
+print(xtable(results, caption = "Output of the the two clusters of cars"), comment = FALSE)
+```
+
+As can be senn from the example, the __Ferrari Dino__ is in cluster __2__, while the __Fiat X1-9__ is grouped in cluster __1__. However, vizualizing the results, provides a more comprehensive overview.
+
+### Exercise 8: Visualizing Unsupervised Learning Results
+
+In the previous exercise, we grouped the cars based on their horsepower and their weight. An important part of machine learning is understanding the results of the model. In the case of clustering, visualization is key to interpretation! One way to achieve this, is by plotting the features of the cars and coloring the points based on their corresponding cluster.
+
+In this exercise we summarize the reuslts of `kmeans()` in a comprehensive figure.
+
+#### Instructions:
+
+* Use the `plot()` command by coloring the cars based on their cluster. Do this by setting the col argument to the cluster partitioning vector: `km_cars$cluster.` 
+* Print out the clusters' centroids, which are kind of like the centers of each cluster. They can be found in the centers __element__ of `km_cars`. 
+* Replace the `___` in `points()` with the clusters's centroids. This will add the centroids to your earlier plot.
+
+__NOTE:__ To learn about the other parameters that have been defined for you, have a look at the [__graphical parameters documentation__](http://www.rdocumentation.org/packages/graphics/functions/par).
+
+#### Results:
+
+```{r exercise1_8, echo = TRUE}
+# The cars data frame is pre-loaded
+
+# Set random seed. Don't remove this line
+set.seed(1)
+
+# Group the dataset into two clusters: km_cars
+#km_cars <- kmeans(cars, 2)
+
+# Add code: color the points in the plot based on the clusters
+#plot(cars)
+
+# Print out the cluster centroids
+
+
+# Replace the ___ part: add the centroids to the plot
+#points(___, pch = 22, bg = c(1, 2), cex = 2)
+
+```
 
 \newpage
 
