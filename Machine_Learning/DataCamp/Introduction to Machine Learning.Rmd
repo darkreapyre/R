@@ -25,7 +25,7 @@ opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'c
 ```
 
 \newpage
-
+ 
 # Chapter 1: What is Machine Learning   
 ## Introduction  
 
@@ -339,31 +339,38 @@ In this exercise we summarize the reuslts of `kmeans()` in a comprehensive figur
 
 * Use the `plot()` command by coloring the cars based on their cluster. Do this by setting the col argument to the cluster partitioning vector: `km_cars$cluster.` 
 * Print out the clusters' centroids, which are kind of like the centers of each cluster. They can be found in the centers __element__ of `km_cars`. 
-* Replace the `___` in `points()` with the clusters's centroids. This will add the centroids to your earlier plot.
+* Create `points()` with the clusters's centroids. This will add the centroids to the earlier plot.
 
-__NOTE:__ To learn about the other parameters that have been defined for you, have a look at the [__graphical parameters documentation__](http://www.rdocumentation.org/packages/graphics/functions/par).
+__Note:__ To learn about the other parameters that have been defined for you, have a look at the [__graphical parameters documentation__](http://www.rdocumentation.org/packages/graphics/functions/par). 
+
+* If given a vector with a length equal to the number of plotted observations, the `col` argument will color each observation based on the corresponding element in the given vector. In this case, the coloring vector `km_cars$clusters` only contains 1's and 2's, which correspond to the colors "black" and "red" respectively. Hence, the objects in cluster one will be colored black, while those in cluster two will be colored red.
+* The graphical parameter `pch` sets the points' symbol, in this case a filled square. 
+* The graphical parameter `bg` sets the fill color of the points. Only applicable for pch symbols 21 through 25. 
+* The graphical parameter `cex` sets the size of the points' symbol. In this case, it enlarges the symbol by 100%.
 
 #### Results:
 
 ```{r exercise1_8, echo = TRUE}
-# The cars data frame is pre-loaded
+# Create a subset of the mtcars datset with just wt and hp
+cars <- subset(mtcars, select = c(wt, hp))
 
 # Set random seed. Don't remove this line
 set.seed(1)
 
 # Group the dataset into two clusters: km_cars
-#km_cars <- kmeans(cars, 2)
+km_cars <- kmeans(cars, 2)
 
-# Add code: color the points in the plot based on the clusters
-#plot(cars)
+# Plot and color the points in the plot based on the clusters
+plot(cars, col = km_cars$cluster)
+
+# Add the centroids to the plot
+points(km_cars$centers, pch = 22, bg = c(1, 2), cex = 2)
 
 # Print out the cluster centroids
-
-
-# Replace the ___ part: add the centroids to the plot
-#points(___, pch = 22, bg = c(1, 2), cex = 2)
-
+km_cars$centers
 ```
+
+__The cluster centroids are typically good representations of all the observations in a cluster. They are often used to summarize clusters.__
 
 \newpage
 
