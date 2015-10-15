@@ -8,20 +8,11 @@ output:
 ---
 
 ```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
-# make this an external chunk that can be included in any file
 require(knitr)
 require(xtable)
 require(ISLR)
 require(rpart)
 options(xtable.comment = TRUE)
-#opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/')
-
-#Add Table Captions
-#table <- [OUTPUT]
-#```{r echo = FALSE, results='asis'}
-#print(xtable(table, caption = "caption"), comment = FALSE)
-#```
-
 ```
 
 \newpage
@@ -101,7 +92,7 @@ With a linear model `lm_wage`, that is built with previous observations, one can
 
 #### Results:
 
-```{r exercise1_2, echo = TRUE}
+```{r exercise_2, echo = TRUE}
 # The Wage dataset is already loaded from the outset.
 # Build a Linear Model called lm_wage
 lm_wage <- lm(wage ~ age, data = Wage)
@@ -137,7 +128,7 @@ Filtering spam from relevant emails is a typical machine learning task. Informat
 
 #### Results:
 
-```{r exercise1_3, echo = TRUE}
+```{r exercise_3, echo = TRUE}
 # Load the emails dataset into the workspace
 emails <- read.csv("data/emails_small.csv")
 
@@ -178,7 +169,7 @@ Analyze the number of views of a LinkedIn profile by predicting how often a prof
 
 #### Results:
 
-```{r exercise1_4, echo = TRUE}
+```{r exercise_4, echo = TRUE}
 # Create the linkedin vector of the number of views per day for 3 weeks
 linkedin <- c(5, 7, 4, 9, 11, 10, 14, 17, 13, 11, 18, 17, 21, 21, 24, 23, 28, 35, 21, 27, 23)
 
@@ -213,7 +204,7 @@ __Note:__ In problems that have a random aspect (like `kmeans()`), the `set.seed
 
 #### Results:
 
-```{r exercise1_5, echo = TRUE}
+```{r exercise_5, echo = TRUE}
 # Set random seed.
 set.seed(1)
 
@@ -268,7 +259,7 @@ In the previous exercises, we used the `kmeans()` function to perform clustering
 * Use the `predict()` function with the tree model as the first argument. The second argument should be a dataframe containing observations of which we want to predict the label. In this case, we can use the predefined unseen data frame. The third argument should be `type = "class"`. 
 * Simply print out the result of this prediction step.
 
-```{r exercise 1_6, echo = TRUE}
+```{r exercise_6, echo = TRUE}
 # Set random seed. 
 set.seed(1)
 
@@ -355,7 +346,7 @@ __Note:__ To learn about the other parameters that have been defined for you, ha
 
 #### Results:
 
-```{r exercise1_8, echo = TRUE}
+```{r exercise_8, echo = TRUE}
 # Create a subset of the mtcars datset with just wt and hp
 cars <- subset(mtcars, select = c(wt, hp))
 
@@ -389,7 +380,7 @@ How do we assess the quality of a particular Machine Learning model after ir has
 - __Model Accurancy__
 - __Computation Time__ 
 - __Interpretability__ 
-2. The different tasks of Machine Learning have their own perfmance measures.
+2. The different tasks of Machine Learning (Classification, Regression and Clustering), each have their own perfmance measures.
 
 ## Measuring Performance: Classification
 
@@ -410,7 +401,145 @@ However, depending on the context of the Model it is always a good practice to c
 \label{Figure2}
 \end{figure}
 
-### Interpreting the Confusion Matrix
+To uderstand how to interpret the Consuion Matrix, we will use a Binary Classifier example where one class is __positive__ and the other class is __negative__. 
+
+#### True Positives
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/truepositive.png}
+\caption{True Positives on the Confusion Matrix}
+\label{Figure3}
+\end{figure}
+
+As Figure 3 shows, the upper left-hand corner of the Confusion Matris shows the frequency of __True Positives__. These are instances where the model has correctly classified as __Positive__. 
+
+#### True Negatives
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/truenegative.png}
+\caption{True Negatives on the Confusion Matrix}
+\label{Figure4}
+\end{figure}
+
+Figure 4 shows the the lower right-hand corner of the Confusion Matrix representing __True Negatives__. This is the frequancy of the instances that are correctly classified, by the model, as being classified as __Negative__. 
+
+#### False Negatives
+
+Figure 5 illustrates the upper right-hand corner of the Confusion Matrix for __False Negatives__. These are the instances that are classified as __Negative__, but are actually __Potisitve__.
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/falsenegative.png}
+\caption{False Negatives on the Confusion Matrix}
+\label{Figure5}
+\end{figure}
+
+\newpage
+
+#### False Positives
+
+Figure 6 highlightes the lower left-hand corner of the Confusion Matrix, the frequency of __False Positives__. This is the frequancy of instances which are classified as __Positive__, but are actually __Negative__. 
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/falsepositive.png}
+\caption{False Positives on the Confusion Matrix}
+\label{Figure6}
+\end{figure}
+
+### Ratios in the Confusion Matrix
+
+By using these above mentioned measures, we can now calculate new ratios:
+
+- Accuracy
+- Precision
+- Recall
+
+Where __Precision__ is:
+
+$$Precision  = \frac{True \ Positives}{True \ Positives + False \ Positives}$$
+
+And __Recall__ is:
+
+$$Recall = \frac{True \ Positives}{True \ Positives + False \ Negatives}$$
+
+Thus __Accuracy__ is:
+
+$$Accuracy = \frac{\left( True \ Positives + True \ Negatives \right)}{\left( True \ Positives + False \ Positives + False \ Negatives + True \ Negatives \right)}$$
+
+## Measuring Performance: Regression
+
+To measure the perrformance of Regression algorithms, we use the __Root Mean Squared Error__ (RMSE). 
+
+$$RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left( y_i - \hat y_i \right)^2}$$
+
+$y_i$: Actual outcome for observation $i$  
+$\hat y_i$: Predicted outcome for observation $i$  
+$N$: Number of observations  
+
+This equation shows the mean distance between each of the estimates and the regaression line, as shown in Figure 7. If these distances are small, the __RMSE__ will also be small. If the distances are large, then the __RMSE__ will also be large. 
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/rmse.png}
+\caption{RMSE}
+\label{Figure7}
+\end{figure}
+
+## Measuring Performance: Clustering
+
+Measuring the performance of a Clustering algorithm is somewhat difficult because there is no label information. So the best way to measure how well it performed is to measure the distance between the various points. Specifically, the performance measure for Clustering is comprised of two elements:
+
+1. The similarity __within__ each cluster $\rightarrow$ How alike are same points within the cluster? To measure this, we minimize the following: 
+    - Within Cluster Sum of Squares (WSS)
+    - Diameter
+2. The similarity __between__ the various clusters $\rightarrow$ How alike are the points between the various different clusters? To measure this, we maximize the following: 
+    - Between Cluster sum of Squares (BSS)
+    - Intercluster distance  
+
+__Note:__ For a well performaning algorithm, we want the first metric (similarity within the cluster) to be __high__ and the second metric (similarity between clusters), to be __low__.
+
+3. Dunn's Index
+
+$$Dunn's \ Index = \frac{Minimal \ Intercluster \ Distance}{Maximal \ Diameter}$$
+
+### Exercise 9: The Confusion MAtrix
+
+Have you ever wondered if you would have survived the Titanic disaster in 1912? Kaggle has some historical data on this event. In this exercise a decision tree is learned on this dataset, that aims to predict whether a person would have survived the accident based on the variables `Age`, `Sex` and `Pclass` (travel class). The decision that the tree makes, can be deemed right or wrong if it knows what the true outcome was. Since the true fate of the passengers, Survived, is also provided in titanic, you can compare it to the prediction of the tree. As you've seen in the video, the results can be summarized in a confusion matrix. In R, you can use the table() function for this.
+
+In this exercise, you will only focus on assessing the performance of the decision tree. In chapter 3, you will learn how to actually build a decision tree yourself.
+
+__Note:__ As in the previous chapter, there are functions that have a random aspect. The set.seed() function is used to enforce reproducibility. Don't worry about it, just don't remove it!
+
+#### Instructions
+
+
+    Have a look at the structure of titanic. Can you infer the number of observations and variables?
+    Inspect the code that build the decision tree, tree. Don't worry if you do not fully understand it yet.
+    Use tree to predict() who survived in the titanic dataset. Use tree as the first argument and titanic as the second argument. Make sure to set the type parameter to "class". Assign the result to pred.
+    Build the confusion matrix with the table() function. This function builds a contingency table. The first argument corresponds to the rows in the matrix and should be the Survived column of titanic: the true labels. The second argument, corresponding to the columns, should be pred: the predicted labels.
+
+```{r exercise_9, echo = TRUE}
+# The titanic dataset is already loaded into your workspace
+
+# Set random seed. Don't remove this line
+set.seed(1)
+
+# Have a look at the structure of titanic
+str(titanic)
+
+# A decision tree classification model is built on the data
+tree <- rpart(Survived ~ ., data = titanic, method = "class")
+
+# Use the predict() method to make predictions, assign to pred
+
+
+# Use the table() method to make the confusion matrix
+
+
+```
 
 
 \newpage
