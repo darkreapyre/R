@@ -469,6 +469,106 @@ Thus __Accuracy__ is:
 
 $$Accuracy = \frac{\left( True \ Positives + True \ Negatives \right)}{\left( True \ Positives + False \ Positives + False \ Negatives + True \ Negatives \right)}$$
 
+### Exercise 9: The Confusion Matrix
+
+Have you ever wondered if you would have survived the Titanic disaster in 1912? [Kaggle](https://www.kaggle.com/c/titanic/data) has some historical data on this event. In this exercise a decision tree is learned on this dataset, that aims to predict whether a person would have survived the accident based on the variables `Age`, `Sex` and `Pclass` (travel class). The decision that the tree makes, can be deemed right or wrong if it knows what the true outcome was. Since the true fate of the passengers, `Survived`, is also provided in the Titanic data, we can compare it to the prediction of the tree. The results can be summarized in a Confusion Matrix. In `R`, we can use the `table()` function for this.
+
+In this exercise, we will only focus on assessing the performance of the decision tree. In chapter 3, you will learn how to actually build a decision tree.
+
+__Note:__ As in the previous chapter, there are functions that have a random aspect. The `set.seed()` function is used to enforce reproducibility. 
+
+#### Instructions:
+
+* Clean out the `titanic` data set to only show the `age`, `Sex` and `Pclass` labels. Review the structure of resultant data set `titanic` and infer the number of observations and variables? 
+* Inspect the code that builds the decision tree, tree.
+* Use the tree to `predict()` who survived in the titanic dataset. Use the tree as the first argument and titanic as the second argument. Make sure to set the type parameter to "class". Assign the result to `pred`.
+* Build the Confusion Matrix with the `table()` function. This function builds a contingency table. The first argument corresponds to the rows in the matrix and should be the `Survived` column of `titanic` $\rightarrow$ the true labels. The second argument, corresponding to the columns, should be `pred` $\rightarrow$ the predicted labels.
+
+```{r exercise_9, echo = TRUE}
+# Load the titanic data set from Kaggle and extract only the needed variables
+titanic <- read.csv("data/titanic.csv")
+titanic <- subset(titanic, select = c(Survived, Pclass, Sex, Age))
+titanic <- titanic[complete.cases(titanic), ] # Remove NA's
+
+# Convert predictor to a factor
+titanic$Survived <- as.factor(titanic$Survived)
+
+# Set random seed. Don't remove this line
+set.seed(1)
+
+# Have a look at the structure of titanic
+str(titanic)
+
+# A decision tree classification model is built on the data
+tree <- rpart(Survived ~ ., data = titanic, method = "class")
+
+# Use the predict() method to make predictions, assign to pred
+pred <- predict(tree, titanic, type = "class")
+
+```
+
+#### Results:
+
+```{r echo = FALSE, results = 'asis'}
+results <- as.matrix(table(titanic$Survived, pred))
+print(xtable(results, caption = "Confusion Matrix ..."), comment = FALSE)
+
+```
+
+To summarize, __212__ out of all __265__ survivors were correctly predicted to have survived. On the other hand, __371__ out of the __449__ deceased were correctly predicted to have perished. Next we will put these numbers in more comprehensive ratios.
+
+### Exercise 10: Deriving Ratios from the Confustion Matrix
+
+The confusion matrix from the last exercise provides us with the raw performance of the decision tree: 
+
+1. The survivors correctly predicted to have survived $\rightarrow$ `true positives` __(TP)__
+2. The deceased who were wrongly predicted to have survived $\rightarrow$ `false positives` __(FP)__
+3. The survivors who were wrongly predicted to have perished $\rightarrow$ `false negatives` __(FN)__
+4. The deceased who were correctly predicted to have perished $\rightarrow$  `true negatives` __(TN)__
+
+We've  seen that these values can be used to estimate comprehensive ratios to asses the performance of a classification algorithm. An example is the accuracy, which in this case represents the percentage of correctly predicted fates of the passengers.
+
+$$Accuracy = \frac {TP + TN}{TP + FN + FP + TN}$$
+
+Apart from accuracy, there is also precision and recall. Key metrics to assess the results of a classification algorithm:
+
+$$Precision = \frac{TP}{TP + FP}$$
+
+$$Recall = \frac{TP}{TP + FN}$$
+
+#### Instructions:
+
+* Assign the correct values of the confusion matrix to TP, FN, FP and TN. 
+* Calculate the accuracy as acc and print it out. 
+* Finally, also calculate the precision and the recall, as prec and rec. Print out both of them.
+
+```{r exercise_10, echo = TRUE}
+# Make the confusion matrix is available as conf
+conf <- table(titanic$Survived, pred)
+
+# Assign TP, FN, FP and TN using conf
+TP <- conf[2, 2]
+FN <- conf[2, 1]
+FP <- conf[1, 2]
+TN <- conf[1, 1]
+
+# Calculate and print the accuracy: acc
+acc <- (TP + TN)/(TP + FN + FP + TN)
+print(acc)
+
+# Calculate and print out the precision: prec
+prec <- TP/(TP + FP)
+print(prec)
+
+# Calculate and print out the recall: rec
+rec <- TP/(TP + FN)
+print(rec)
+```
+
+#### Results:
+
+With an accuracy of around __`r round(acc * 100)`%__, only __`r round((1 - acc) * 100)`%__ of the passengers were wrongly predicted to have survived or perished. This is mostly an acceptable, but not truly satisfying classifier. 
+
 ## Measuring Performance: Regression
 
 To measure the perrformance of Regression algorithms, we use the __Root Mean Squared Error__ (RMSE). 
@@ -488,6 +588,81 @@ This equation shows the mean distance between each of the estimates and the rega
 \label{Figure7}
 \end{figure}
 
+### Exercise 11: The Quality of a Regression
+
+In this example we measure the sound pressure produced by an airplane's wing under different settings. These settings are the frequency of the wind, the angle of the wing, and several more. The results of this experiment are listed in the `air` dataset from [UCIMLR](https://archive.ics.uci.edu/ml/datasets/Airfoil+Self-Noise). We want to build a model that's able to predict the sound pressure based on these settings, instead of having to do those tedious experiments every time. 
+
+In the exercise, there is an already prepared multivariable linear regression model, called `fit`. It takes as input the predictors: wind frequency (`freq`), wing's angle (`angle`) and chord's length (`ch_length`). The response is the sound pressure (`dec`). All these variables can be found in `air`.
+
+The purpose of the exercise is to assess the quality of the model by calculating the root Mean Squared Error (RMSE).
+
+#### Instructions:
+
+* Take a look at the structure of air. What does it show?
+* Inspect the code that builds a multivariable liner regression model based on air. 
+* Use the `predict()` function to make predictions for the observations in the `air` dataset. Simply pass `fit` to `predict()`. 
+* Assign the result to `pred`. 
+* Calculate the __RMSE__ using the mentioned formula above. $y_i$ corresponds to the actual sound pressure of observation $i$, which is in `air$dec`. $\hat y_i$ corresponds to the predicted value of observation $i$, which is in `pred`. Assign the resulting RMSE to `rmse`. 
+* Print out `rmse`.
+
+```{r exercise_11, echo = TRUE}
+# Load the air dataset: air
+air <- read.table("data/airfoil_self_noise.dat")
+colnames(air) <- c("freq", "angle", "ch_length", "velocity",
+                   "thickness", "dec")
+
+# Take a look at the structure of air
+str(air)
+
+# Inspect your colleague's code to build the model
+fit <- lm(dec ~ freq + angle + ch_length, data = air)
+
+# Use the model to predict for all values: pred
+pred <- predict(fit)
+
+# Use air$dec and pred to calculate the RMSE 
+N <- nrow(air)
+rmse <- sqrt(sum((air$dec - pred)^2)/N)
+```
+
+#### Results:
+
+The RMSE is given by __`r round(rmse)`__. But what exactly does __`r round(rmse)`__ actually mean? 
+
+This is __`r round(rmse)`__ decibels, the unit of the sound pressure. As a standalone number, it means nothing. In order to derive its meaning, it should be compared to the RMSE of a different model for the same problem, as the next exercise will show. 
+
+### Exercise 12: Adding complexity to increase quality
+
+In the last exercise, the model had 3 predictors or input variables, but what happens if we included more predictors? Since the data includes measurements on free-stream velocity $\rightarrow$ `velocity` and suction side displacement thickness $\rightarrow$ thickness, available for use in the `air` dataset as well. Adding the new variables will definitely increase the complexity of the model, but will it increase the performance? A first step to should take is once again calculate the RMSE and compare it to the previous result.
+
+#### Instructions:
+
+* Use the `predict()` function to make predictions using `fit2`, for __all__ values in the `air` dataset. Assign the resultin vector to `pred2`. 
+* Calculate the __RMSE__ using the formula above. Assign this value to `rmse2`. 
+* Print `rmse2` and compare it with the earlier `rmse`. What can we conclude?
+
+```{r exercise_12, echo = TRUE}
+# Use he air dataset from the previous exercise
+# re-fit the previous model
+fit <- lm(dec ~ freq + angle + ch_length, data = air)
+pred <- predict(fit)
+rmse <- sqrt(sum( (air$dec - pred) ^ 2) / nrow(air))
+rmse
+
+# Your colleague's more complex model
+fit2 <- lm(dec ~ freq + angle + ch_length + velocity + thickness, data = air)
+
+# Use the model to predict for all values: pred2
+pred2 <- predict(fit2)
+
+# Calculate rmse2
+rmse2 <- sqrt(sum( (air$dec - pred2)^2 / nrow(air)))
+```
+
+#### Results:
+
+Adding complexity seems to have caused the __RMSE__ to decrease, from __`r round(rmse, digits = 3)`__ to __`r round(rmse2, digits = 3)`__. But there's more going on here; maybe adding variables always leads to a decrease of the RMSE?
+
 ## Measuring Performance: Clustering
 
 Measuring the performance of a Clustering algorithm is somewhat difficult because there is no label information. So the best way to measure how well it performed is to measure the distance between the various points. Specifically, the performance measure for Clustering is comprised of two elements:
@@ -505,41 +680,47 @@ __Note:__ For a well performaning algorithm, we want the first metric (similarit
 
 $$Dunn's \ Index = \frac{Minimal \ Intercluster \ Distance}{Maximal \ Diameter}$$
 
-### Exercise 9: The Confusion MAtrix
+### Exercise 13: Clustering
 
-Have you ever wondered if you would have survived the Titanic disaster in 1912? Kaggle has some historical data on this event. In this exercise a decision tree is learned on this dataset, that aims to predict whether a person would have survived the accident based on the variables `Age`, `Sex` and `Pclass` (travel class). The decision that the tree makes, can be deemed right or wrong if it knows what the true outcome was. Since the true fate of the passengers, Survived, is also provided in titanic, you can compare it to the prediction of the tree. As you've seen in the video, the results can be summarized in a confusion matrix. In R, you can use the table() function for this.
+In the dataset `seeds` we can find various metrics for 210 seeds, such as `area`, `perimeter` and `compactness`, among others from [UCIMLR](https://archive.ics.uci.edu/ml/datasets/seeds). However, the seeds' labels are lost. Hence, we don't know which metrics belong to which type of seed. What we do know, is that there were three types of seeds.
 
-In this exercise, you will only focus on assessing the performance of the decision tree. In chapter 3, you will learn how to actually build a decision tree yourself.
+The code on the below creates clusters of the seeds into three clusters, called `km_seeds`, but is it likely that these three clusters represent our seed types?
 
-__Note:__ As in the previous chapter, there are functions that have a random aspect. The set.seed() function is used to enforce reproducibility. Don't worry about it, just don't remove it!
+There are two initial steps to potentially take: 
 
-#### Instructions
+1. Visualize the resulting clusters for two variables, for example `length` versus `compactness`. 
+2. Verify if the clusters are well separated and compact. To this end, we can calculate the __between__ and __within__ cluster sum of squares respectively.
 
+#### Instructions:
 
-    Have a look at the structure of titanic. Can you infer the number of observations and variables?
-    Inspect the code that build the decision tree, tree. Don't worry if you do not fully understand it yet.
-    Use tree to predict() who survived in the titanic dataset. Use tree as the first argument and titanic as the second argument. Make sure to set the type parameter to "class". Assign the result to pred.
-    Build the confusion matrix with the table() function. This function builds a contingency table. The first argument corresponds to the rows in the matrix and should be the Survived column of titanic: the true labels. The second argument, corresponding to the columns, should be pred: the predicted labels.
+* Look at the structure of the seeds dataset. 
+* Extend the `plot()` command by coloring the observations based on their cluster. Do this by setting the `col` argument equal to the cluster element of `km_seeds`. 
+* Print out the ratio of the within sum of squares to the between cluster sum of squares, so __WSS/BSS__. These measures can be found in the cluster object `km_seeds` as `tot.withinss` and `betweenss`. Is the within sum of squares substantionally lower than the between sum of squares?
 
-```{r exercise_9, echo = TRUE}
-# The titanic dataset is already loaded into your workspace
+```{r exercise_13, echo = TRUE}
+# The seeds dataset is already loaded into your workspace
+seeds <- read.table("data/seeds_dataset.txt")
+colnames(seeds) <- c("ares", "perimeter", "compactness", "length",
+                     "width", "asymmetry", "groove_length")
+seeds <- seeds[, 1:7]
 
 # Set random seed. Don't remove this line
 set.seed(1)
 
-# Have a look at the structure of titanic
-str(titanic)
+# Explore the structure of the dataset
+str(seeds)
 
-# A decision tree classification model is built on the data
-tree <- rpart(Survived ~ ., data = titanic, method = "class")
+# Group the seeds in three clusters
+km_seeds <- kmeans(seeds, 3)
 
-# Use the predict() method to make predictions, assign to pred
+# Color the points in the plot based on the clusters
+plot(length ~ compactness, data = seeds)
 
-
-# Use the table() method to make the confusion matrix
-
+# Print out the ratio of the WSS to the BSS
 
 ```
+
+
 
 
 \newpage
