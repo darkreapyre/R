@@ -511,7 +511,7 @@ pred <- predict(tree, titanic, type = "class")
 
 ```{r echo = FALSE, results = 'asis'}
 results <- as.matrix(table(titanic$Survived, pred))
-print(xtable(results, caption = "Confusion Matrix ..."), comment = FALSE)
+print(xtable(results, caption = "Resultant Confusion Matrix"), comment = FALSE)
 
 ```
 
@@ -714,9 +714,218 @@ str(seeds)
 km_seeds <- kmeans(seeds, 3)
 
 # Color the points in the plot based on the clusters
-plot(length ~ compactness, data = seeds)
+plot(length ~ compactness, data = seeds, col = km_seeds$cluster)
 
 # Print out the ratio of the WSS to the BSS
+print(km_seeds$tot.withinss/km_seeds$betweenss)
+
+```
+
+#### Results: 
+
+The within sum of squares __(`r round(km_seeds$tot.withinss, digits = 2)`)__ is far lower than the between sum of squares __(`r round(km_seeds$betweenss, digits = 2)`)__. Indicating the clusters are well seperated and overall compact. This is further strengthened by the plot above, where the clusters were visually distinct for these two variables. It's likely that these three clusters represent the three seed types well, even if there's no way to truly verify this. 
+
+## The Training Set and the Test Set  
+
+The maine difference between the classical statistics and Supervised Learning/Machine Leaning is all about the __Predictive Power vs. Desciptive Power__. With Supervised Learning, it is essential that the leaned model must have a strong predictive power. If a model has a strong predictive power, it is able to make good precictions about new __unseen__ observations. Classical statistics on the other hand is typically more concerned about how well the model fits the complete data set $\rightarrow$ to explain or describe the data. 
+
+When learning a __predictive__ model, typically a complete data set is __NOT__ used to train the model. The data set is usually broken down into two specifica parts:
+
+- __Training Set__ $\rightarrow$ Used for `training` the model.
+- __Test Set__ $\rightarrow$ Used to evluate the actual performance if the model on `unseen` data. 
+
+It is very importnt to realize that the Training Set and the Test Set are __disjoint__ sets. In other words, they don't have any observations in common $\rightarrow$ NO OVERLAP. This clear separation makes it possible to test wether the trained model __generalizes__ well to unseen data. 
+
+For example, take Classification problem with a data set of $N$ observations ($X$), $K$ features ($F$) and $y$ class labels for each observation, as is illustrated int Figure 8. The resultant Confusion Matrix provides us with a clear idea of the actual predictive performance of the Classifier. 
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/split.png}
+\caption{Splitting the Data}
+\label{Figure8}
+\end{figure}
+
+ __Note:__ The concepts of Train and Test sets are only important inthe context of Supervised Learning. these concepts are NOT used in Unserpervised Lening because the data is not labeled. 
+
+### Creating the Training and Test Sets
+
+In order to get the most benefit of traing and testing the model, there are a number of  key considerations to take note of when determiningwhich instances of the observations go in the Training Set and which instances go in the Test Set.
+
+Firstly, one typically chooses a Training Set that is larger then the Test Set to train the model on the majority of the obersations to improve the model's accurancy (more data = better model) and most cases this is a ratio of __3:1__. But one should take care that the Test Set is not too small as the model performance measures should be indiciative of the overall performance of the model when used with further unseen observations. 
+
+Secondly, depending on the type of Machine Learning model being used, there are a number of factors that influence which elements are added to the Training Set and which are allocated to the Test Set.
+
+- __Classification__ $\rightarrow$ Classes within the Test Set and the Training Set should have similar distributions. This ensures that all classes are available in each of the sets. 
+- __Classification and Regression__ $\rightarrow$ Shuffle the complete data set before splitting them. 
+
+Finally, sampling the data in a particular way to create the Test Set can impact the performancce measures on the Set. To strengthen the measure, we should make use of __cross-validation__. This means that we use a learning algorithm to train a model multiple times, each time, with a different separation of Traing and Test data. Figure 9 illustrates this, where the data is "foled" four times, with each fold producing a differnt set of Training and Test data. The results from each fold are aggregated to form a robust measure. 
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/4fold.png}
+\caption{4-fold Cross Validation}
+\label{Figure9}
+\end{figure}
+
+### Exercise 14: Splitting the Sets
+
+In this exercise we will be ssing the `titanic` dataset from [Exercise 9](Exercise 9: The Confusion Matrix), where we set up a decision tree and assessed its performance by calculating the confusion matrix. However, the tree was built using the entire set of observations, so the resultant confusion matrix doesn't assess the predictive power of the `tree`. The training set and the test set were one and the same thing: this can be done better!
+
+First off, we'll want to split the dataset into a Training Set and a Test Set. But before that, notice that the titanic dataset is sorted on `titanic$Survived` , so the dataset must be shuffled first in order to have a fair distribution of the output variable in both sets. 
+
+For example, the following commands could to shuffle a data frame `df` and divide it in a training and test set with a `60/40` split.
+
+```{r eval = FALSE}
+n <- nrow(df)
+shuffled_df <- df[sample(n), ]
+train_indices <- 1:round(0.6 * n)
+train <- shuffled_df[train_indices, ]
+test_indices <- (round(0.6 * n) + 1):n
+test <- shuffled_df[test_indices, ]
+
+```
+
+__Note:__ The example shows how to do a `60/40 split`. In the exercise a 70/30 split should be done. 
+
+#### Instructions:
+
+* Shuffle the observations of the titanic dataset and store the result in shuffled. 
+* Split the dataset into a train set, and a test set. Use a `70/30` split. 
+* Print out the structure of both train and test with `str()`. Does your result make sense?
+
+```{r exercise_14, echo = TRUE}
+# Create a fresh load the titanic dataset
+titanic <- read.csv("data/titanic.csv")
+titanic <- subset(titanic, select = c(Survived, Pclass, Sex, Age))
+titanic <- titanic[complete.cases(titanic), ] # Remove NA's
+titanic <- titanic[with(titanic, order(titanic$Survived)),] # Order by Survived
+
+# Set random seed. Don't remove this line.
+set.seed(1)
+
+# Shuffle the dataset, call the result shuffled
+n <- nrow(titanic)
+shuffled <- titanic[sample(n), ]
+
+# Split the data in train and test
+train_index <- 1:round(0.7 * n)
+test_index <- (round(0.7 * n) + 1):n
+train <- shuffled[train_index, ]
+test <- shuffled[test_index, ]
+
+```
+
+#### Results:  
+
+```{r echo = FALSE}
+# Print the structure of train and test
+str(train)
+str(test)
+
+```
+
+### Exercise 15: Training then Testing
+
+In this exercise we redo the model used in [Exercise 9](Exercise 9: The Confusion Matrix), this time, however, we build a decision tree on the training set and then assess its predictive power on the test set. 
+
+#### Instructions: 
+
+* Correct the decision tree model that was learned to be learned from the `training` set.
+* Use the `predict()` function with the first argument being the tree model and the second argument being the correct data set. Set the `type` to "class" and call the predicted vector `pred`.
+* Use the `table()` function to calculate the confusion matrix. Assign the table to `conf`. Remember that the actual labels of the test set should be the rows and the predicted labels, the columns.
+* Print out `conf`.
+
+```{r exercise_15, echo = TRUE}
+# Create a fresh load the titanic dataset
+titanic <- read.csv("data/titanic.csv")
+titanic <- subset(titanic, select = c(Survived, Pclass, Sex, Age))
+titanic <- titanic[complete.cases(titanic), ] # Remove NA's
+titanic <- titanic[with(titanic, order(titanic$Survived)),] # Order by Survived
+
+# Set random seed. Don't remove this line.
+set.seed(1)
+
+# Shuffle the dataset; build train and test
+n <- nrow(titanic)
+shuffled <- titanic[sample(n),]
+train <- shuffled[1:round(0.7 * n),]
+test <- shuffled[(round(0.7 * n) + 1):n,]
+
+# Change the model that has been learned. One of the arguments is incorrect.
+tree <- rpart(Survived ~ ., train, method = "class")
+
+# Predict the outcome on the test set with tree: pred
+pred <- predict(tree, test, type = "class")
+
+# Calculate the confusion matrix
+conf <- table(test$Survived, pred)
+
+```
+
+#### Results: 
+
+```{r echo = FALSE, results = 'asis'}
+# Print this confusion matrix
+results <- as.matrix(conf)
+print(xtable(results, caption = "Resultant Confusion Matrix"), comment = FALSE)
+
+```
+
+The confusion matrix reveals an accuracy of __`r round( (conf[2, 2] + conf[1, 1]) / (conf[2, 2] + conf[2, 1] + conf[1, 2] + conf[1, 1]), digits = 2) * 100`%__, which is less than the __82%__ calculated in [Exercise 9]( Exercise 9: The Confusion Matrix). However, this is a much more trustworthy estimate of the model's true predictive power.
+
+### Exercise 16: Using Cross Validation
+
+In this exercise we will evaluate getting better predictive performance using __Cross Validation__, by "folding" the dataset 6 times and calculating the accuracy for each fold. The mean of these accuracies forms a more robust estimation of the real accuracy on unseen data, as it depends less on the choice of training and test set.
+
+__Note:__ Other performance measures, such as recall or precision, can be used as well. 
+
+#### Instructions:
+
+* Initialize a vector of length 6. The elements should all be `0`. 
+* Split the dataset correctly 6 times and build a model on the training set inside a for loop. 
+* Use the model to predict the values of the test set. Use `predict()` andvset `type` to "class". Assign the result to `pred`. 
+* Make the confusion matrix using `table()` and assign it to `conf`. 
+* Assign the accuracy of the model to the correct index in `accs`. Use the confusion matrix, `conf`.  
+                **Tip:** `diag()` provides the elements on the diagonal of a matrix. 
+* Finally, print the mean accuracy.
+
+#### Results:
+
+```{r exercise_16, echo = TRUE}
+# Uee the shuffled dataset from the previous exercise.
+#shuffled$Survived <- as.factor(shuffled$Survived)
+
+# Set random seed. Don't remove this line.
+#set.seed(1)
+
+# Initialize the accs vector
+#accs <- seq(0, 0, length = 6)
+
+#for (i in 1:6) {
+  # These indices indicate the interval of the test set
+ # indices <- (((i-1) * round((1/6)*nrow(shuffled))) + 1):((i*round((1/6) * nrow(shuffled))))
+  
+  # Exclude them from the train set
+  #train <- shuffled[-indices,]
+  
+  # Include them in the test set
+  #test <- shuffled[indices,]
+  
+  # A model is learned using each training set
+  #tree <- rpart(Survived ~ ., train, method = "class")
+  
+  # Make a prediction on the test set using tree
+  #predict()
+  
+  # Assign the confusion matrix to conf
+
+  
+  # Assign the accuracy of this model to the ith index in accs
+
+#}
+
+# Print out the mean of accs
+
 
 ```
 
@@ -728,4 +937,3 @@ plot(length ~ compactness, data = seeds)
 # Appendix A: Regression Coefficients
 
 As an example of trying to fit a linear function between a `Predictor` (e.g. Weight) and a `Response` (e.g. Height). $$Height \approx \beta_0+\beta_1\times Weight$$ Together $\beta_1$ and $\beta_0$ are known as the model coefficients or parameters. As soon as we know what these coefficients are, the function is able to convert any new input to output. This means that solving the Machine Learning problem is to find good values for $\beta_1$ and $\beta_0$, estimated from previous input to previous output observations. 
-
