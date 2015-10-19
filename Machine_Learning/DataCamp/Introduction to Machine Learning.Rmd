@@ -392,7 +392,7 @@ __AND__
 
 $$Error \ Rate = 1 - Accuracy$$
 
-However, depending on the context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified in a particular way. __Figure 2__ shows an example of a __confusion Matrix__.
+However, depending on the context of the Model it is always a good practice to calculate the __Confusion Matrix__. The Confusion Matrix consists of rows and colums, both contain all the available labels. Each cell contains the frequency of which the instances are classified in a particular way. __Figure 2__ shows an example of a __Confusion Matrix__.
 
 \begin{figure}[h]
 \center
@@ -448,6 +448,8 @@ Figure 6 highlightes the lower left-hand corner of the Confusion Matrix, the fre
 \caption{False Positives on the Confusion Matrix}
 \label{Figure6}
 \end{figure}
+
+__Note:__ It is important to remember that when dealing with a Binary Classifier, `R` versions may display the possitive __positive__ and __negative__ in the reverse order to what is above figures show. Always pay attention to which colums and which rows show the predicted vs. true positive and negative respectivley. 
 
 ### Ratios in the Confusion Matrix
 
@@ -871,9 +873,9 @@ print(xtable(results, caption = "Resultant Confusion Matrix"), comment = FALSE)
 
 ```
 
-The confusion matrix reveals an accuracy of __`r round( (conf[2, 2] + conf[1, 1]) / (conf[2, 2] + conf[2, 1] + conf[1, 2] + conf[1, 1]), digits = 2) * 100`%__, which is less than the __82%__ calculated in [Exercise 9]( Exercise 9: The Confusion Matrix). However, this is a much more trustworthy estimate of the model's true predictive power.
+The confusion matrix reveals an accuracy of __`r round( (conf[2, 2] + conf[1, 1]) / (conf[2, 2] + conf[2, 1] + conf[1, 2] + conf[1, 1]), digits = 2) * 100`%__, which is less than the __82%__ calculated in [Exercise 9](Exercise 9: The Confusion Matrix). However, this is a much more trustworthy estimate of the model's true predictive power.
 
-### Exercise 16: Using Cross Validation
+### Exercise 16: Manual implementation of Cross Validation
 
 In this exercise we will evaluate getting better predictive performance using __Cross Validation__, by "folding" the dataset 6 times and calculating the accuracy for each fold. The mean of these accuracies forms a more robust estimation of the real accuracy on unseen data, as it depends less on the choice of training and test set.
 
@@ -885,9 +887,10 @@ __Note:__ Other performance measures, such as recall or precision, can be used a
 * Split the dataset correctly 6 times and build a model on the training set inside a for loop. 
 * Use the model to predict the values of the test set. Use `predict()` and set `type` to "class". Assign the result to `pred`. 
 * Make the confusion matrix using `table()` and assign it to `conf`. 
-* Assign the accuracy of the model to the correct index in `accs`. Use the confusion matrix, `conf`.  
-                **Tip:** `diag()` provides the elements on the diagonal of a matrix. 
-* Finally, print the mean accuracy.
+* Assign the accuracy of the model to the correct index in `accs`. Use the confusion matrix, `conf`.
+* Finally, print the mean accuracy. 
+
+Tip: `diag()` provides the elements on the diagonal of a matrix. 
 
 ```{r exercise_16, echo = TRUE}
 # Uee the shuffled dataset from the previous exercise.
@@ -934,7 +937,80 @@ print(mean(accs))
 
 ```
 
-As can be seen, the resultant estimate __(`r round(mean(accs) * 100)`%)__ is  a more robust measure of the accuracy. It will also be less susceptible to the randomness of splitting the dataset.
+As can be seen, the resultant estimate __(`r round(mean(accs) * 100)`%)__ is  a more robust measure of the accuracy. It will also be less susceptible to the randomness of splitting the dataset. 
+
+
+## Bias and Variance
+
+Since __Prediction__ is the main goal behind Supervised Learning techniques, the __Prediction Error__ of a model can be split into components:
+
+1. Reducible Error
+2. Irreducible Error
+
+The __Irreducible Error__ can be seen as noise or irregularities in the data and should NOT be minimized when training a model. Of more importance is the __Reducible Error__. This is the error due to an "unfit" model and the lower this error, the better the learning algorithm. The Reducible Error can be split into an error due to __Bian__ and an error due to __Variance__. __Bias__ and __Variance__ are two essential elements in Machine Learning as they highlight the key concepts behind why it can be a challenge. 
+
+The error due to __Bias__ is derived from assumptions that are made when specifing the learning algorithm. Choosing the incorrect model will cause the error due to bias to be __high__ because the model is being restricted and unable to fit the data more effectivley (the more restrictions, the higher the bias). So in essence, the error due to __Bias__ is the difference between predictions made by the chosen learning algorithm and the true values. 
+
+The error due to __Variance__ is the prediction error that is caused by the sampling of the dataset, specifically the training set. A model with a high variance fits the training set closely including the "noise". Having the model fit the trainign set too closely will not generalize well to the test set (or new data). 
+
+To this end there needs to be a __trade-off__ between Bias and Variance. A low Bias, not resticting the learning model and allowing it to fit perfectly, leads to high Variance. On the contrary, when the Bias is high, then model is more restricted and variance is lower. This is because it is less sensitive to the changes in the traing set. 
+
+__Figure 10__ provides a gopod visual overview of the __Bias vs. Variance__ trade-off.
+
+\begin{figure}[h]
+\center
+\includegraphics{figures/biasvariance.png}
+\caption{Bias vs. Variance Trade-off}
+\label{Figure10}
+\end{figure}
+
+## Overfitting and Underfitting
+
+__Overfitting__ and __Underfitting__ are another set of terms often used when disussing the accuracy of a particular model. 
+
+When splitting the data, the accuracy of a model with __Variance__ will depend on which data is in the __training__ set. Basically the model fits the training set far too well (high variance) $\rightarrow$ __Overfitting__. In other words, the model prefectly describes the training set, but generalizes badly to the test set (too sepcific to the trainig set). 
+
+__Underfitting__ means that the the model is restricted, it's __Bias__ is too high or too general. 
+
+### Exercise 17: Overfitting
+
+In this exercise, we will make use of the crude spamfilter, `spam_classifier()`, from chapter 1. Recall that it filters spam based on the average sequential use of capital letters (`avg_capital_seq`) to decide whether an email was spam (`1`) or not (`0`). However the set, `emails_small` that was used to test the classifier was only a small fraction of the entire dataset. In this example, we make use of the entire data set, `emails_full` from [UCIMLR](https://archive.ics.uci.edu/ml/datasets/Spambase).
+
+the objective of this execersie is to verify whether the `spam_classifier` generalizes to the entire set of emails. The accuracy for the set, `emails_small` is equal to 1. Is the accuracy for the entire set `emails_full` substantially lower?
+
+#### Instructions
+
+* Apply `spam_classifier()` on the `avg_capital_seq` variable in `emails_full` and save the results in `pred_full`. 
+* Create a confusion matrix, using `table()`: `conf_full`. Put the true labels found in `emails_full$spam` in the rows. 
+* Use `conf_full` to calculate the accuracy: `acc_full`. 
+* Print out the result. 
+
+Tip: The functions `diag()` and `sum()` will help. 
+
+```{r exercise_17, echo = TRUE}
+# The spam filter that has been 'learned' for you
+spam_classifier <- function(x){
+  prediction <- rep(NA,length(x))
+  prediction[x > 4] <- 1
+  prediction[x >= 3 & x <= 4] <- 0
+  prediction[x >= 2.2 & x < 3] <- 1
+  prediction[x >= 1.4 & x < 2.2] <- 0
+  prediction[x > 1.25 & x < 1.4] <- 1
+  prediction[x <= 1.25] <- 0
+  return(factor(prediction, levels=c("1","0")))
+}
+
+# Apply spam_classifier to emails_full: pred_full
+
+
+# Build confusion matrix for emails_full: conf_full
+
+
+# Calculate the accuracy with conf_full: acc_full
+
+
+# Print acc_full
+```
 
 \newpage
 
