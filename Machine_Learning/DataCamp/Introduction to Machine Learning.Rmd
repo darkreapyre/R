@@ -883,54 +883,58 @@ __Note:__ Other performance measures, such as recall or precision, can be used a
 
 * Initialize a vector of length 6. The elements should all be `0`. 
 * Split the dataset correctly 6 times and build a model on the training set inside a for loop. 
-* Use the model to predict the values of the test set. Use `predict()` andvset `type` to "class". Assign the result to `pred`. 
+* Use the model to predict the values of the test set. Use `predict()` and set `type` to "class". Assign the result to `pred`. 
 * Make the confusion matrix using `table()` and assign it to `conf`. 
 * Assign the accuracy of the model to the correct index in `accs`. Use the confusion matrix, `conf`.  
                 **Tip:** `diag()` provides the elements on the diagonal of a matrix. 
 * Finally, print the mean accuracy.
 
-#### Results:
-
 ```{r exercise_16, echo = TRUE}
 # Uee the shuffled dataset from the previous exercise.
-#shuffled$Survived <- as.factor(shuffled$Survived)
+shuffled$Survived <- as.factor(shuffled$Survived)
 
 # Set random seed. Don't remove this line.
-#set.seed(1)
+set.seed(1)
 
 # Initialize the accs vector
-#accs <- seq(0, 0, length = 6)
+accs <- seq(0, 0, length = 6)
 
-#for (i in 1:6) {
-  # These indices indicate the interval of the test set
- # indices <- (((i-1) * round((1/6)*nrow(shuffled))) + 1):((i*round((1/6) * nrow(shuffled))))
+for (i in 1:6) {
+  # These indices indicate the interval of the test set.
+  # For example, if i = 1, then the indices will be from 1 to 119,
+  # and if i = 2, then the indices will be from 120 to 238 etc.
+  indices <- (((i-1) * round((1/6)*nrow(shuffled))) + 1):
+          ((i*round((1/6) * nrow(shuffled))))
   
-  # Exclude them from the train set
-  #train <- shuffled[-indices,]
+  # Exclude them from the train set using i set of indices
+  train <- shuffled[-indices,]
   
-  # Include them in the test set
-  #test <- shuffled[indices,]
+  # Include them in the test set usinf i set of indices
+  test <- shuffled[indices,]
   
-  # A model is learned using each training set
-  #tree <- rpart(Survived ~ ., train, method = "class")
+  # A model is learned using each training set: tree
+  tree <- rpart(Survived ~ ., train, method = "class")
   
-  # Make a prediction on the test set using tree
-  #predict()
+  # Make a prediction on the test set using tree: pred
+  pred <- predict(tree, test, type = "class")
   
-  # Assign the confusion matrix to conf
-
+  # Assign the confusion matrix: conf
+  conf <- table(test$Survived, pred)
   
   # Assign the accuracy of this model to the ith index in accs
+  accs[i] <- sum(diag(conf)) / sum(conf)
+}
+```
 
-#}
+#### Results:
 
+```{r echo = TRUE}
 # Print out the mean of accs
-
+print(mean(accs))
 
 ```
 
-
-
+As can be seen, the resultant estimate __(`r round(mean(accs) * 100)`%)__ is  a more robust measure of the accuracy. It will also be less susceptible to the randomness of splitting the dataset.
 
 \newpage
 
