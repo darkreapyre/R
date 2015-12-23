@@ -41,7 +41,7 @@ From __Figure 1__, we see that each square (row) and its corresponding color is 
 squares <- data.frame(size = c("small", "big", "medium"),
                       edge = c("dotted", "stripped", "normal"),
                       color = c("green", "yellow", "green"))
-print(xtable(squares, caption = "The dataset as a data.rame"), comment = FALSE)
+print(xtable(squares, caption = "The dataset as a data.frame"), comment = FALSE)
 
 ```
 
@@ -988,7 +988,7 @@ the objective of this execersie is to verify whether the `spam_classifier` gener
 Tip: The functions `diag()` and `sum()` will help. 
 
 ```{r exercise_17, echo = TRUE}
-# The spam filter that has been 'learned' for you
+# The spam filter that has been 'learned'
 spam_classifier <- function(x){
   prediction <- rep(NA,length(x))
   prediction[x > 4] <- 1
